@@ -5,6 +5,7 @@ import '@fontsource/noto-sans-gurmukhi/700.css'
 
 import { createEngine } from './audio/engine.js'
 import { createSynth } from './audio/synth.js'
+import { loadSettings, saveSettings } from './core/settings.js'
 import { createTransport } from './core/transport.js'
 import { createView, buildSegments } from './ui/view.js'
 import { drawTimeline, timeAtX } from './ui/timeline.js'
@@ -25,7 +26,10 @@ const synth = createSynth(() => engine.ensureCtx())
 
 let frozenNow = 0
 let lastVoiced = null      // most recent confidently voiced frame
-let historySig = 0
+let historySig = -1
+let historyTick = 0
+
+const stored = loadSettings()
 
 // ---------------------------------------------------------------- controls --
 // Sa selector: pitch class + octave. B2 is the default because it is a common
@@ -63,7 +67,7 @@ async function refreshDevices () {
     const sel = $('deviceSel')
     // Keep whatever is already in use selected — re-selecting a different entry
     // here would trigger a device switch, and with it a new permission prompt.
-    const keep = engine.currentDeviceId() || sel.value
+    const keep = engine.currentDeviceId() || sel.value || stored.deviceId
     sel.innerHTML = ''
     devices.forEach(d => {
       const opt = document.createElement('option')
@@ -77,7 +81,14 @@ async function refreshDevices () {
 
 async function startMic () {
   try {
-    await engine.start($('deviceSel').value || undefined)
+    try {
+      await engine.start($('deviceSel').value || undefined)
+    } catch (err) {
+      // A remembered device may no longer be plugged in; fall back to default.
+      if (err.name !== 'OverconstrainedError' && err.name !== 'NotFoundError') throw err
+      engine.release()
+      await engine.start(undefined)
+    }
     $('gate').classList.add('hidden')
     $('recBtn').classList.add('on')
     $('recBtn').textContent = '■ Stop'
@@ -197,6 +208,7 @@ tl.addEventListener('wheel', e => {
   } else {
     view.timeWindow = clamp(view.timeWindow * (e.deltaY > 0 ? 1.12 : 0.89), 2, 40)
   }
+  persistSoon()
 }, { passive: false })
 
 // One pointer scrubs history, two pinch the time window.
@@ -227,7 +239,7 @@ tl.addEventListener('pointermove', e => {
 
   if (pinch && tlPointers.size === 2) {
     const d = spread()
-    if (d > 8) view.timeWindow = clamp(pinch.window * (pinch.dist / d), 2, 40)
+    if (d > 8) { view.timeWindow = clamp(pinch.window * (pinch.dist / d), 2, 40); persistSoon() }
     return
   }
   if (dragStartX != null && tlPointers.has(e.pointerId)) {
@@ -262,6 +274,52 @@ tl.addEventListener('pointerleave', e => {
   view.hoverTime = null
   $('tooltip').classList.remove('show')
 })
+
+// --------------------------------------------------------------- persistence --
+// Every control in the setup bar is remembered, so Sa, scale, tempo, labelling
+// and volume survive a reload. The metronome is deliberately not restored: it
+// would need to start making noise before the page has had a user gesture.
+const PERSIST_IDS = [
+  'a4', 'saNoteSel', 'saOctSel', 'scaleSel', 'labelSel',
+  'bpm', 'meterSel', 'autoChk', 'flatChk', 'soundChk', 'sustainChk', 'vol'
+]
+
+function captureSettings () {
+  const out = {}
+  for (const id of PERSIST_IDS) {
+    const el = $(id)
+    out[id] = el.type === 'checkbox' ? el.checked : el.value
+  }
+  out.timeWindow = Math.round(view.timeWindow * 10) / 10
+  out.deviceId = engine.currentDeviceId() || $('deviceSel').value || ''
+  return out
+}
+
+let persistTimer = 0
+function persistSoon () {
+  clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => saveSettings(captureSettings()), 250)
+}
+
+function applyStoredSettings () {
+  for (const id of PERSIST_IDS) {
+    if (!(id in stored)) continue
+    const el = $(id)
+    if (el.type === 'checkbox') el.checked = !!stored[id]
+    else {
+      // Skip anything that is no longer a valid choice (an option we renamed,
+      // or a device that has been unplugged).
+      if (el.tagName === 'SELECT' && ![...el.options].some(o => o.value === String(stored[id]))) continue
+      el.value = stored[id]
+    }
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+    el.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+  if (Number.isFinite(stored.timeWindow)) view.timeWindow = clamp(stored.timeWindow, 2, 40)
+}
+
+$('controls').addEventListener('change', persistSoon)
+$('controls').addEventListener('input', persistSoon)
 
 // ---------------------------------------------------------------- chrome UI --
 $('settingsBtn').onclick = () => {
@@ -452,20 +510,7 @@ function render () {
   $('posTxt').textContent =
     `bar ${Math.floor(beat / transport.state.beatsPerBar) + 1} · beat ${Math.floor(beat % transport.state.beatsPerBar) + 1}`
 
-  // ---- recent-note list (rebuilt only when the segment run changes) ----
-  if (segs.length !== historySig) {
-    historySig = segs.length
-    const list = $('history')
-    list.innerHTML = ''
-    for (const s of segs.slice(-9).reverse()) {
-      const li = document.createElement('li')
-      const off = Math.abs(s.cents) < 5 ? '✓' : `${s.cents > 0 ? '+' : ''}${s.cents.toFixed(0)}¢`
-      li.innerHTML = `<span>${labelFor(s.semitone, view)}</span>
-        <span style="color:${tuningColor(s.cents, 1)}">${off}</span>
-        <span style="color:var(--dim)">${(s.end - s.start).toFixed(2)}s</span>`
-      list.appendChild(li)
-    }
-  }
+  refreshHistory(frames)
 
   // ---- hover tooltip ----
   const tip = $('tooltip')
@@ -497,6 +542,7 @@ Promise.all([
   document.fonts.load('700 56px "Noto Sans Gurmukhi"')
 ]).catch(() => {})
 
+applyStoredSettings()
 refreshDevices()
 render()
 
@@ -514,6 +560,100 @@ if (new URLSearchParams(location.search).has('demo')) {
     $('gateBtn').onclick = go
     go().catch(() => { /* needs a click first if autoplay is blocked */ })
   })
+}
+
+// ------------------------------------------------------- history & accuracy --
+// The lists cover the whole session, not just what is on screen, so a singer
+// can scroll back through what they sang and see which notes they habitually
+// miss — and in which direction.
+
+const HISTORY_FRAMES = 60 * 60 * 5     // last ~5 minutes
+const HISTORY_ROWS = 80
+const MIN_HELD = 0.12                  // ignore passing blips between notes
+
+function verdict (cents) {
+  if (Math.abs(cents) < 10) return { mark: '✓', text: 'in tune' }
+  return cents > 0
+    ? { mark: '↑', text: 'sharp' }
+    : { mark: '↓', text: 'flat' }
+}
+
+const pct = cents => 50 + Math.max(-50, Math.min(50, cents))
+
+// A ±50¢ bar: the translucent band is how far the note wandered while held,
+// the solid tick is where it averaged out.
+function bar (cents, lo, hi, colour) {
+  const left = Math.min(pct(lo), pct(hi))
+  const width = Math.max(1.5, Math.abs(pct(hi) - pct(lo)))
+  return `<span class="h-bar">
+    <span class="spread" style="left:${left}%;width:${width}%;background:${colour}"></span>
+    <i style="left:calc(${pct(cents)}% - 1.5px);background:${colour}"></i>
+  </span>`
+}
+
+function refreshHistory (frames) {
+  if (++historyTick % 12) return          // ~5 refreshes a second is plenty
+  const recent = frames.length > HISTORY_FRAMES ? frames.slice(-HISTORY_FRAMES) : frames
+  const segs = buildSegments(recent, { minDur: MIN_HELD })
+  if (segs.length === historySig) return
+  historySig = segs.length
+  renderRecent(segs)
+  renderAccuracy(segs)
+}
+
+function renderRecent (segs) {
+  const list = $('history')
+  if (!segs.length) {
+    list.innerHTML = '<li class="empty">Nothing sung yet.</li>'
+    return
+  }
+  list.innerHTML = segs.slice(-HISTORY_ROWS).reverse().map(s => {
+    const colour = tuningColor(s.cents, 1)
+    const v = verdict(s.cents)
+    const lo = (s.min - s.semitone) * 100
+    const hi = (s.max - s.semitone) * 100
+    const cents = `${s.cents > 0 ? '+' : ''}${s.cents.toFixed(0)}¢`
+    return `<li title="${noteName(s.semitone, view.useFlats)} — ${v.text}, wandered ${s.vibrato.toFixed(0)}¢ over ${(s.end - s.start).toFixed(2)}s">
+      <span class="h-note">${labelFor(s.semitone, view)}</span>
+      ${bar(s.cents, lo, hi, colour)}
+      <span class="h-cents" style="color:${colour}">${v.mark} ${cents}</span>
+      <span class="h-dur">${(s.end - s.start).toFixed(1)}s</span>
+    </li>`
+  }).join('')
+}
+
+// Which notes does this singer habitually miss? Averaged per pitch, worst first.
+function renderAccuracy (segs) {
+  const byNote = new Map()
+  for (const s of segs) {
+    const entry = byNote.get(s.semitone) || { semitone: s.semitone, n: 0, sum: 0, sumAbs: 0 }
+    entry.n++
+    entry.sum += s.cents
+    entry.sumAbs += Math.abs(s.cents)
+    byNote.set(s.semitone, entry)
+  }
+
+  const rows = [...byNote.values()]
+    .filter(e => e.n >= 2)                       // one attempt is not a habit
+    .map(e => ({ ...e, mean: e.sum / e.n, meanAbs: e.sumAbs / e.n }))
+    .sort((a, b) => b.meanAbs - a.meanAbs)
+    .slice(0, 10)
+
+  const list = $('accuracy')
+  if (!rows.length) {
+    list.innerHTML = '<li class="empty">Sing a note twice or more and it appears here.</li>'
+    return
+  }
+  list.innerHTML = rows.map(e => {
+    const colour = tuningColor(e.mean, 1)
+    const v = verdict(e.mean)
+    return `<li title="Average over ${e.n} attempts — typically ${Math.abs(e.mean).toFixed(0)}¢ ${v.text}">
+      <span class="h-note">${labelFor(e.semitone, view)}</span>
+      ${bar(e.mean, e.mean, e.mean, colour)}
+      <span class="h-cents" style="color:${colour}">${v.mark} ${e.mean > 0 ? '+' : ''}${e.mean.toFixed(0)}¢</span>
+      <span class="h-dur">×${e.n}</span>
+    </li>`
+  }).join('')
 }
 
 // Exposed for debugging from the console (and for feeding synthetic frames).

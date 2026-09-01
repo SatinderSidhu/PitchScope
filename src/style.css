@@ -109,7 +109,16 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
   border-radius: 10px;
   padding: 12px;
   min-height: 0;
+  /* The panel itself scrolls, so a short window can never clip the lists off
+     the bottom of the screen. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
+.side > .now,
+.side > .meter,
+.side > .stats,
+.side > .history-head,
+.side > .hint { flex: 0 0 auto; }
 .now { text-align: center; }
 .note-big {
   font: 700 56px/1.1 ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
@@ -124,23 +133,76 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
 .cents { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 6px; }
 .meter { width: 100%; height: 78px; }
 
-.stats { display: grid; gap: 4px; font-size: 11px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; gap: 2px 12px; font-size: 11px; }
+.stats .wide { grid-column: 1 / -1; }
 .stats div { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
-.stats span { color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; }
-.stats b { font: 12px ui-monospace, Menlo, monospace; }
+.stats span { color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; font-size: 9px; }
+.stats b { font: 11px ui-monospace, Menlo, 'Noto Sans Gurmukhi', monospace; }
 
-.history-head { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin-top: 4px; }
+.history-head {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  position: sticky;
+  top: -12px;
+  background: var(--panel);
+  padding: 4px 0 3px;
+  z-index: 1;
+}
+.history-head .sub { text-transform: none; letter-spacing: 0; opacity: 0.6; font-size: 9px; }
 .history {
   list-style: none;
   margin: 0;
   padding: 0;
   overflow-y: auto;
-  flex: 1;
-  min-height: 60px;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+  min-height: 150px;
+  max-height: 260px;
   font: 12px ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
 }
-.history li { display: flex; justify-content: space-between; padding: 3px 4px; border-radius: 4px; }
+.accuracy { flex: 0 1 auto; min-height: 112px; max-height: 190px; }
+
+/* note | deviation bar | cents | duration */
+.history li {
+  display: grid;
+  grid-template-columns: 4.4em 1fr 3.4em 2.8em;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 4px;
+}
 .history li:nth-child(odd) { background: rgba(255, 255, 255, 0.03); }
+.history li.empty { display: block; color: var(--dim); font-size: 11px; padding: 8px 4px; }
+
+.h-note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.h-cents { text-align: right; font-size: 11px; }
+.h-dur { text-align: right; color: var(--dim); font-size: 10px; }
+
+/* A ±50 cent track with a centre tick; the marker sits where the note landed. */
+.h-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.h-bar::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.h-bar i { position: absolute; top: 1px; bottom: 1px; width: 3px; border-radius: 2px; }
+.h-bar .spread { position: absolute; top: 3px; bottom: 3px; border-radius: 2px; opacity: 0.35; }
 
 .hint { font-size: 10px; color: var(--dim); line-height: 1.6; border-top: 1px solid var(--line); padding-top: 8px; }
 .hint b { color: var(--text); font-family: ui-monospace, Menlo, monospace; }

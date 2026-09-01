@@ -32,6 +32,13 @@ western names, or both at once, with a Sa you choose.
   controls behind a Setup button, and every gesture is touch-native: tap or
   slide the keys (several fingers at once), drag the graph to scrub back
   through history, pinch it to zoom the time window
+- **Note history** — a scrollable list of every note sung this session with its
+  tuning error, a ±50¢ deviation bar and how far the pitch wandered while held
+- **Accuracy by note** — the same data averaged per note and sorted worst first,
+  so a habit ("my Ga is always 25¢ flat") shows up as a habit rather than as one
+  bad attempt
+- **Settings are remembered** — Sa, scale, labelling, tempo, meter, reference
+  pitch and volume are stored in the browser and restored on the next visit
 - **Export** — the graph as PNG, or the session as CSV (note, swara, saptak,
   cents, vibrato, bar and beat per sung note)
 

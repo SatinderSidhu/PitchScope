@@ -118,11 +118,16 @@
           <div><span>Frequency</span><b id="hzTxt">— Hz</b></div>
           <div><span>Target</span><b id="targetTxt">—</b></div>
           <div><span>Confidence</span><b id="confTxt">—</b></div>
-          <div><span>Position</span><b id="posTxt">bar 1 · beat 1</b></div>
+          <div class="wide"><span>Position</span><b id="posTxt">bar 1 · beat 1</b></div>
           <div><span>Saptak</span><b id="saptakTxt">—</b></div>
         </div>
-        <div class="history-head">Recent notes</div>
+        <div class="history-head">Recent notes <span class="sub">newest first</span></div>
         <ul id="history" class="history"></ul>
+
+        <div class="history-head">Accuracy by note <span class="sub">worst first</span></div>
+        <ul id="accuracy" class="history accuracy">
+          <li class="empty">Sing a few notes and this fills in.</li>
+        </ul>
         <div class="hint">
           <b>space</b> record · <b>R</b> clear · <b>F</b> freeze<br />
           scroll = zoom time · shift+scroll = zoom pitch<br />
