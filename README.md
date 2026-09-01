@@ -18,6 +18,10 @@ western names, or both at once, with a Sa you choose.
 - **Cents meter** — ±50¢ tuning readout, green when centred
 - **Two keyboards** — a vertical rail that doubles as the graph's Y axis, and a
   horizontal piano; the key you are singing lights up, recent keys fade out
+- **Playable keys** — click any key on either keyboard to hear a reed-like
+  reference tone, drag to glide between notes, or turn on *sustain* to latch
+  notes so a Sa + Pa drone keeps ringing while you sing (Esc stops everything).
+  Wear headphones, or the microphone will hear the tone as well as your voice
 - **Beat grid** — vertical bar/beat lines through the graph plus a per-beat lane
   showing which note occupied each beat. 4/4 by default, also 3/4, 2/4, 5/4,
   6/8, 7/8, with an optional metronome

@@ -23,6 +23,13 @@ export function createEngine ({ onFrame } = {}) {
     lastMidis: []
   }
 
+  // One AudioContext for the whole app: the mic, the metronome and the
+  // keyboard synth all share it, and it can exist before the mic is started.
+  function ensureCtx () {
+    state.ctx = state.ctx || new (window.AudioContext || window.webkitAudioContext)()
+    return state.ctx
+  }
+
   async function listDevices () {
     const devices = await navigator.mediaDevices.enumerateDevices()
     return devices.filter(d => d.kind === 'audioinput')
@@ -60,7 +67,7 @@ export function createEngine ({ onFrame } = {}) {
       }
     })
 
-    state.ctx = state.ctx || new (window.AudioContext || window.webkitAudioContext)()
+    ensureCtx()
     await state.ctx.resume()
 
     state.analyser = state.ctx.createAnalyser()
@@ -80,7 +87,7 @@ export function createEngine ({ onFrame } = {}) {
   // Same pipeline as start(), but fed by a synthesised source instead of a mic.
   async function startDemo (attach) {
     if (state.running) stop()
-    state.ctx = state.ctx || new (window.AudioContext || window.webkitAudioContext)()
+    ensureCtx()
     await state.ctx.resume()
     state.analyser = state.ctx.createAnalyser()
     state.analyser.fftSize = 2048
@@ -153,6 +160,7 @@ export function createEngine ({ onFrame } = {}) {
 
   return {
     state,
+    ensureCtx,
     start,
     startDemo,
     stop,

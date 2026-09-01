@@ -76,6 +76,13 @@
       <label class="check"><input id="clickChk" type="checkbox" /> metronome</label>
 
       <span class="sep"></span>
+      <label class="check"><input id="soundChk" type="checkbox" checked /> key sound</label>
+      <label class="check"><input id="sustainChk" type="checkbox" /> sustain</label>
+      <label class="field">Vol
+        <input id="vol" type="range" min="0" max="100" value="35" />
+      </label>
+
+      <span class="sep"></span>
       <label class="check"><input id="autoChk" type="checkbox" checked /> auto range</label>
       <label class="check"><input id="flatChk" type="checkbox" /> flats</label>
 
@@ -106,7 +113,9 @@
         <div class="hint">
           <b>space</b> record · <b>R</b> clear · <b>F</b> freeze<br />
           scroll = zoom time · shift+scroll = zoom pitch<br />
-          drag = scrub history · click = inspect a moment
+          drag = scrub history · click = inspect a moment<br />
+          <b>click a key</b> to hear it · sustain latches it on<br />
+          use headphones so the tone is not picked up by the mic
         </div>
       </aside>
 

@@ -4,10 +4,11 @@ import '@fontsource/noto-sans-gurmukhi/400.css'
 import '@fontsource/noto-sans-gurmukhi/700.css'
 
 import { createEngine } from './audio/engine.js'
+import { createSynth } from './audio/synth.js'
 import { createTransport } from './core/transport.js'
 import { createView, buildSegments } from './ui/view.js'
 import { drawTimeline, timeAtX } from './ui/timeline.js'
-import { drawKeyRail, drawPiano } from './ui/keyboard.js'
+import { drawKeyRail, drawPiano, pianoKeyAt, railMidiAt } from './ui/keyboard.js'
 import { drawBeatLane } from './ui/beatlane.js'
 import { drawMeter } from './ui/meter.js'
 import { noteName, centsOff, midiToFreq, tuningColor, SHARP_NAMES, SCALES } from './core/notes.js'
@@ -17,7 +18,10 @@ const $ = id => document.getElementById(id)
 
 const view = createView()
 const engine = createEngine()
-const transport = createTransport(() => engine.ctx, () => engine.now)
+// ensureCtx rather than engine.ctx: the metronome and the keyboard synth both
+// need to make sound before the microphone has ever been started.
+const transport = createTransport(() => engine.ensureCtx(), () => engine.now)
+const synth = createSynth(() => engine.ensureCtx())
 
 let frozenNow = 0
 let lastVoiced = null      // most recent confidently voiced frame
@@ -117,6 +121,52 @@ $('freezeBtn').onclick = () => {
   $('freezeBtn').classList.toggle('on', view.frozen)
 }
 
+$('soundChk').onchange = e => { if (!e.target.checked) synth.allOff() }
+$('sustainChk').onchange = e => { if (!e.target.checked) synth.allOff() }
+$('vol').oninput = e => synth.setVolume(Number(e.target.value) / 100)
+
+// ------------------------------------------------------- playable keyboards --
+// Press a key to hear it. With `sustain` on, a click latches the note so a
+// reference tone (or a two-note drone) keeps ringing while you sing.
+let pressed = null
+
+function playKey (midi) {
+  if (midi == null || !$('soundChk').checked) return
+  if ($('sustainChk').checked) {
+    synth.isOn(midi) ? synth.noteOff(midi) : synth.noteOn(midi, { a4: engine.state.a4 })
+    return
+  }
+  synth.noteOn(midi, { a4: engine.state.a4 })
+  pressed = midi
+}
+
+function releaseKey () {
+  if (pressed != null && !$('sustainChk').checked) synth.noteOff(pressed)
+  pressed = null
+}
+
+function midiAtPiano (e) {
+  const r = $('piano').getBoundingClientRect()
+  return pianoKeyAt(view, r.width, r.height, e.clientX - r.left, e.clientY - r.top)
+}
+
+function midiAtRail (e) {
+  const r = $('rail').getBoundingClientRect()
+  return railMidiAt(view, r.height, e.clientY - r.top)
+}
+
+for (const [el, resolve] of [[$('piano'), midiAtPiano], [$('rail'), midiAtRail]]) {
+  el.addEventListener('mousedown', e => { e.preventDefault(); playKey(resolve(e)) })
+  // Dragging across the keys glides from note to note.
+  el.addEventListener('mousemove', e => {
+    if (pressed == null) return
+    const midi = resolve(e)
+    if (midi != null && midi !== pressed) { synth.noteOff(pressed); pressed = null; playKey(midi) }
+  })
+}
+window.addEventListener('mouseup', releaseKey)
+window.addEventListener('blur', () => { releaseKey(); if (!$('sustainChk').checked) synth.allOff() })
+
 // ------------------------------------------------------------ interactions --
 const tl = $('timeline')
 
@@ -155,6 +205,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'Space') { e.preventDefault(); engine.running ? stopMic() : startMic() }
   if (e.key === 'r' || e.key === 'R') { engine.clear(); view.scrollBack = 0 }
   if (e.key === 'f' || e.key === 'F') $('freezeBtn').click()
+  if (e.key === 'Escape') synth.allOff()
 })
 
 // ----------------------------------------------------------------- exports --
@@ -257,10 +308,11 @@ function render () {
   const activeMidi = shown ? Math.round(shown.midi) : null
   const cents = shown ? centsOff(shown.midi) : null
 
+  const playing = synth.playing()
   const { segs } = drawTimeline(tl, { view, frames, transport, now })
-  drawKeyRail($('rail'), { view, active: activeMidi, recent })
+  drawKeyRail($('rail'), { view, active: activeMidi, recent, playing })
   drawBeatLane($('beatlane'), { view, transport, segs, now })
-  drawPiano($('piano'), { view, active: activeMidi, recent, cents })
+  drawPiano($('piano'), { view, active: activeMidi, recent, cents, playing })
   drawMeter($('meter'), { cents, live: shown != null })
 
   // ---- readout ----
@@ -368,4 +420,4 @@ if (new URLSearchParams(location.search).has('demo')) {
 }
 
 // Exposed for debugging from the console (and for feeding synthetic frames).
-window.pitchscope = { engine, view, transport }
+window.pitchscope = { engine, view, transport, synth }
