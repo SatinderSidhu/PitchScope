@@ -55,7 +55,7 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.field select option { font-family: -apple-system, 'Noto Sans Gurmukhi', sans-serif; }
+.field select option, .field optgroup { font-family: -apple-system, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic', sans-serif; }
 .field select, .field input {
   background: var(--panel-2);
   color: var(--text);
@@ -121,12 +121,12 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
 .side > .hint { flex: 0 0 auto; }
 .now { text-align: center; }
 .note-big {
-  font: 700 56px/1.1 ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
+  font: 700 56px/1.1 ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic', 'Gurmukhi MN', monospace;
   letter-spacing: -0.02em;
   color: var(--text);
 }
 .note-alt {
-  font: 13px/1.4 ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
+  font: 13px/1.4 ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic', 'Gurmukhi MN', monospace;
   color: var(--dim);
   margin-top: 2px;
 }
@@ -137,7 +137,7 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
 .stats .wide { grid-column: 1 / -1; }
 .stats div { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
 .stats span { color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; font-size: 9px; }
-.stats b { font: 11px ui-monospace, Menlo, 'Noto Sans Gurmukhi', monospace; }
+.stats b { font: 11px ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic', monospace; }
 
 .history-head {
   font-size: 10px;
@@ -164,7 +164,7 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
   flex: 1 1 auto;
   min-height: 150px;
   max-height: 260px;
-  font: 12px ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
+  font: 12px ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic', 'Gurmukhi MN', monospace;
 }
 .accuracy { flex: 0 1 auto; min-height: 112px; max-height: 190px; }
 

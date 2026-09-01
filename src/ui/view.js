@@ -17,10 +17,12 @@ export function createView () {
     tonic: 11,               // pitch class of Sa; kept in sync with saMidi
     scaleDegrees: null,      // null = chromatic, else offsets from Sa
     saMidi: 47,              // B2 — the singer's Sa, changeable
-    labelMode: 'both',       // 'west' | 'sargam' | 'punjabi' | 'both'
-    bothScript: 'punjabi',   // which script the sargam half of 'both' uses
-    // Latin falls to the mono face, Gurmukhi to the first family that has it.
-    labelFont: "ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace"
+    labelMode: 'both',       // 'west' | 'sargam' | 'both'
+    script: 'punjabi',       // 'punjabi' | 'hindi' | 'urdu' | 'latin'
+    // Font fallback is per character, so one stack serves mixed strings like
+    // "B2 ਸਾ": latin takes the mono face, each Indic run takes its own family.
+    labelFont: "ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', " +
+      "'Noto Sans Arabic', 'Gurmukhi MN', 'Devanagari Sangam MN', 'Geeza Pro', monospace"
   }
 
   v.setSa = midi => { v.saMidi = midi; v.tonic = ((midi % 12) + 12) % 12 }

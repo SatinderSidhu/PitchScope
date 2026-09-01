@@ -138,9 +138,7 @@ export function drawPiano (canvas, { view, active, recent, cents, playing }) {
 
 function labelText (midi, view, short) {
   if (view.labelMode === 'west') return noteName(midi, view.useFlats)
-  const script = view.labelMode === 'punjabi' || view.bothScript === 'punjabi' ? 'punjabi' : 'latin'
-  const swara = sargamName(midi, view.saMidi, { script, short })
-  return view.labelMode === 'both' ? swara : swara
+  return sargamName(midi, view.saMidi, { script: view.script, short })
 }
 
 // One label per key: western name, swara, or both stacked. Skipped when the key

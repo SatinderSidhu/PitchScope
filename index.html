@@ -64,10 +64,21 @@
 
       <label class="field">Labels
         <select id="labelSel">
-          <option value="both" selected>both</option>
-          <option value="punjabi">ਪੰਜਾਬੀ ਸਰਗਮ</option>
-          <option value="sargam">Sargam (roman)</option>
-          <option value="west">Western</option>
+          <optgroup label="Sargam + Western">
+            <option value="both:punjabi" selected>ਪੰਜਾਬੀ + Western</option>
+            <option value="both:hindi">हिंदी + Western</option>
+            <option value="both:urdu">اردو + Western</option>
+            <option value="both:latin">Roman + Western</option>
+          </optgroup>
+          <optgroup label="Sargam only">
+            <option value="sargam:punjabi">ਪੰਜਾਬੀ ਸਰਗਮ</option>
+            <option value="sargam:hindi">हिंदी सरगम</option>
+            <option value="sargam:urdu">اردو سرگم</option>
+            <option value="sargam:latin">Sargam (roman)</option>
+          </optgroup>
+          <optgroup label="Western only">
+            <option value="west:latin">Western</option>
+          </optgroup>
         </select>
       </label>
 

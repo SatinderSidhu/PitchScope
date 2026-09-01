@@ -2,6 +2,10 @@
 // system face, and canvas text silently falls back to tofu when one is missing.
 import '@fontsource/noto-sans-gurmukhi/400.css'
 import '@fontsource/noto-sans-gurmukhi/700.css'
+import '@fontsource/noto-sans-devanagari/400.css'
+import '@fontsource/noto-sans-devanagari/700.css'
+import '@fontsource/noto-sans-arabic/400.css'
+import '@fontsource/noto-sans-arabic/700.css'
 
 import { createEngine } from './audio/engine.js'
 import { createSynth } from './audio/synth.js'
@@ -13,7 +17,7 @@ import { drawKeyRail, drawPiano, pianoKeyAt, railMidiAt } from './ui/keyboard.js
 import { drawBeatLane } from './ui/beatlane.js'
 import { drawMeter } from './ui/meter.js'
 import { noteName, centsOff, midiToFreq, tuningColor, SHARP_NAMES, SCALES } from './core/notes.js'
-import { labelFor, dualLabel, sargamName, swaraOf, THAATS } from './core/sargam.js'
+import { labelFor, dualLabel, sargamName, saptakName, swaraOf, THAATS } from './core/sargam.js'
 
 const $ = id => document.getElementById(id)
 
@@ -59,7 +63,6 @@ $('saNoteSel').onchange = applySa
 $('saOctSel').onchange = applySa
 applySa()
 
-const SAPTAK_NAMES = { '-2': 'ati-mandra', '-1': 'mandra ਮੰਦਰ', 0: 'madhya ਮੱਧ', 1: 'taar ਤਾਰ', 2: 'ati-taar' }
 
 async function refreshDevices () {
   try {
@@ -122,7 +125,12 @@ $('scaleSel').onchange = e => {
   const name = e.target.value
   view.scaleDegrees = THAATS[name] || (name === 'chromatic' ? null : SCALES[name])
 }
-$('labelSel').onchange = e => { view.labelMode = e.target.value }
+// The option value carries both halves: "<mode>:<script>".
+$('labelSel').onchange = e => {
+  const [mode, script] = e.target.value.split(':')
+  view.labelMode = mode
+  view.script = script || 'latin'
+}
 $('autoChk').onchange = e => { view.autoRange = e.target.checked }
 $('flatChk').onchange = e => { view.useFlats = e.target.checked }
 
@@ -473,20 +481,18 @@ function render () {
   // ---- readout ----
   if (shown) {
     const west = noteName(shown.midi, view.useFlats)
-    const swaraPunjabi = sargamName(shown.midi, view.saMidi, { script: 'punjabi' })
     const swaraLatin = sargamName(shown.midi, view.saMidi, { script: 'latin' })
-    // Whichever system is selected leads; the other is always shown beneath it,
-    // so the western note and the swara are never more than a glance apart.
-    const lead = view.labelMode === 'west' ? west
-      : view.labelMode === 'sargam' ? swaraLatin
-        : swaraPunjabi
-    const alt = view.labelMode === 'west'
-      ? `${swaraLatin} · ${swaraPunjabi}`
-      : view.labelMode === 'sargam' ? `${west} · ${swaraPunjabi}`
-        : `${west} · ${swaraLatin}`
+    const swaraNative = sargamName(shown.midi, view.saMidi, { script: view.script })
+    // Whichever system is selected leads; the others sit beneath it, so the
+    // western note and the swara are never more than a glance apart.
+    const lead = view.labelMode === 'west' ? west : swaraNative
+    const others = view.labelMode === 'west'
+      ? [swaraLatin, view.script === 'latin' ? null : swaraNative]
+      : [west, view.script === 'latin' ? null : swaraLatin]
+    const alt = others.filter(Boolean).join(' · ')
     $('noteBig').textContent = lead
     $('altBig').textContent = alt
-    $('saptakTxt').textContent = SAPTAK_NAMES[swaraOf(shown.midi, view.saMidi).saptak] || '—'
+    $('saptakTxt').textContent = saptakName(swaraOf(shown.midi, view.saMidi).saptak, view.script)
     $('noteBig').style.color = tuningColor(cents, 1)
     const dir = cents > 0 ? 'sharp' : 'flat'
     $('centsTxt').textContent = Math.abs(cents) < 5
@@ -537,10 +543,10 @@ ${f.t.toFixed(2)}s · bar ${Math.floor(b / transport.state.beatsPerBar) + 1} bea
 
 // Canvas ignores webfonts that have not been loaded yet, so ask for them up
 // front and redraw once they land.
-Promise.all([
-  document.fonts.load('400 12px "Noto Sans Gurmukhi"'),
-  document.fonts.load('700 56px "Noto Sans Gurmukhi"')
-]).catch(() => {})
+Promise.all(['Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic'].flatMap(f => [
+  document.fonts.load(`400 12px "${f}"`),
+  document.fonts.load(`700 56px "${f}"`)
+])).catch(() => {})
 
 applyStoredSettings()
 refreshDevices()

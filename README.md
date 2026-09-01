@@ -5,8 +5,9 @@ the note you are on, how far off it is in cents, what you sang before, and where
 each note landed on the beat grid.
 
 Built for practising against an Indian-classical frame as well as a western one:
-notes can be labelled in Gurmukhi sargam (ਸਾ ਰੇ ਗਾ ਮਾ ਪਾ ਧਾ ਨੀ), roman sargam,
-western names, or both at once, with a Sa you choose.
+notes can be labelled in sargam — Punjabi (ਸਾ ਰੇ ਗਾ ਮਾ ਪਾ ਧਾ ਨੀ), Hindi
+(सा रे गा मा पा धा नी), Urdu (سا رے گا ما پا دھا نی) or roman — in western
+names, or in both systems at once, with a Sa you choose.
 
 **Live:** https://satindersidhu.github.io/PitchScope/
 
@@ -26,7 +27,9 @@ western names, or both at once, with a Sa you choose.
   showing which note occupied each beat. 4/4 by default, also 3/4, 2/4, 5/4,
   6/8, 7/8, with an optional metronome
 - **Sargam** — configurable Sa (B2 by default), all twelve swaras with komal and
-  teevra, saptak markers, and the ten thaats for scale highlighting
+  teevra, saptak markers, the ten thaats for scale highlighting, and a choice of
+  four scripts. Every script is bundled with the app rather than assumed to be
+  present on the machine
 - **Fullscreen** — a toggle in the bar, or shift+F
 - **Works on a phone** — the layout collapses to a single column with the
   controls behind a Setup button, and every gesture is touch-native: tap or
