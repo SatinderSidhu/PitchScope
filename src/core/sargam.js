@@ -96,6 +96,18 @@ export function labelFor (midi, view, { short = false } = {}) {
   }
 }
 
+// Labels for a note from most to least informative, so a caller with limited
+// width can pick the first one that fits rather than overflowing its box.
+export function labelCandidates (midi, view) {
+  const west = noteName(midi, view.useFlats)
+  if (view.labelMode === 'west') return [west]
+  const script = view.labelMode === 'punjabi' || view.bothScript === 'punjabi' ? 'punjabi' : 'latin'
+  const swara = sargamName(midi, view.saMidi, { script })
+  const short = sargamName(midi, view.saMidi, { script: 'latin', short: true })
+  if (view.labelMode === 'both') return [west + ' ' + swara, swara, west, short]
+  return [swara, short, west]
+}
+
 // Both systems spelled out, for the readout and the tooltip.
 export function dualLabel (midi, view) {
   const west = noteName(midi, view.useFlats)

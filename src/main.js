@@ -126,23 +126,35 @@ $('sustainChk').onchange = e => { if (!e.target.checked) synth.allOff() }
 $('vol').oninput = e => synth.setVolume(Number(e.target.value) / 100)
 
 // ------------------------------------------------------- playable keyboards --
-// Press a key to hear it. With `sustain` on, a click latches the note so a
+// Press a key to hear it. With `sustain` on, a press latches the note so a
 // reference tone (or a two-note drone) keeps ringing while you sing.
-let pressed = null
+// Pointer events rather than mouse events, so a finger works the same as a
+// cursor — and several fingers can hold several notes at once.
+const held = new Map()   // pointerId -> midi
 
-function playKey (midi) {
+function startNote (id, midi) {
   if (midi == null || !$('soundChk').checked) return
   if ($('sustainChk').checked) {
     synth.isOn(midi) ? synth.noteOff(midi) : synth.noteOn(midi, { a4: engine.state.a4 })
     return
   }
   synth.noteOn(midi, { a4: engine.state.a4 })
-  pressed = midi
+  held.set(id, midi)
 }
 
-function releaseKey () {
-  if (pressed != null && !$('sustainChk').checked) synth.noteOff(pressed)
-  pressed = null
+function slideNote (id, midi) {
+  const current = held.get(id)
+  if (current == null || midi == null || midi === current) return
+  synth.noteOff(current)
+  held.delete(id)
+  startNote(id, midi)
+}
+
+function endNote (id) {
+  const midi = held.get(id)
+  if (midi == null) return
+  held.delete(id)
+  synth.noteOff(midi)
 }
 
 function midiAtPiano (e) {
@@ -156,19 +168,26 @@ function midiAtRail (e) {
 }
 
 for (const [el, resolve] of [[$('piano'), midiAtPiano], [$('rail'), midiAtRail]]) {
-  el.addEventListener('mousedown', e => { e.preventDefault(); playKey(resolve(e)) })
-  // Dragging across the keys glides from note to note.
-  el.addEventListener('mousemove', e => {
-    if (pressed == null) return
-    const midi = resolve(e)
-    if (midi != null && midi !== pressed) { synth.noteOff(pressed); pressed = null; playKey(midi) }
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault()
+    // Capture is an optimisation (it keeps the slide alive outside the canvas);
+    // if the browser refuses it, the note must still sound.
+    try { el.setPointerCapture(e.pointerId) } catch { /* not capturable */ }
+    startNote(e.pointerId, resolve(e))
   })
+  // Sliding across the keys glides from note to note.
+  el.addEventListener('pointermove', e => { if (held.has(e.pointerId)) slideNote(e.pointerId, resolve(e)) })
+  el.addEventListener('pointerup', e => endNote(e.pointerId))
+  el.addEventListener('pointercancel', e => endNote(e.pointerId))
 }
-window.addEventListener('mouseup', releaseKey)
-window.addEventListener('blur', () => { releaseKey(); if (!$('sustainChk').checked) synth.allOff() })
+window.addEventListener('blur', () => {
+  [...held.keys()].forEach(endNote)
+  if (!$('sustainChk').checked) synth.allOff()
+})
 
 // ------------------------------------------------------------ interactions --
 const tl = $('timeline')
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 
 tl.addEventListener('wheel', e => {
   e.preventDefault()
@@ -176,36 +195,114 @@ tl.addEventListener('wheel', e => {
     view.zoomPitch(e.deltaY > 0 ? 1.12 : 0.89)
     $('autoChk').checked = false
   } else {
-    view.timeWindow = Math.max(2, Math.min(40, view.timeWindow * (e.deltaY > 0 ? 1.12 : 0.89)))
+    view.timeWindow = clamp(view.timeWindow * (e.deltaY > 0 ? 1.12 : 0.89), 2, 40)
   }
 }, { passive: false })
 
-let dragX = null
+// One pointer scrubs history, two pinch the time window.
+const tlPointers = new Map()   // pointerId -> clientX
+let dragStartX = null
 let dragBase = 0
-tl.addEventListener('mousedown', e => { dragX = e.clientX; dragBase = view.scrollBack })
-window.addEventListener('mouseup', e => {
-  if (dragX != null && Math.abs(e.clientX - dragX) < 3) {
-    // A click without a drag pins the inspect cursor (click again to release).
+let pinch = null
+
+const spread = () => {
+  const xs = [...tlPointers.values()]
+  return xs.length === 2 ? Math.abs(xs[0] - xs[1]) : 0
+}
+
+tl.addEventListener('pointerdown', e => {
+  try { tl.setPointerCapture(e.pointerId) } catch { /* not capturable */ }
+  tlPointers.set(e.pointerId, e.clientX)
+  if (tlPointers.size === 2) {
+    pinch = { dist: spread(), window: view.timeWindow }
+    dragStartX = null
+  } else {
+    dragStartX = e.clientX
+    dragBase = view.scrollBack
+  }
+})
+
+tl.addEventListener('pointermove', e => {
+  if (tlPointers.has(e.pointerId)) tlPointers.set(e.pointerId, e.clientX)
+
+  if (pinch && tlPointers.size === 2) {
+    const d = spread()
+    if (d > 8) view.timeWindow = clamp(pinch.window * (pinch.dist / d), 2, 40)
+    return
+  }
+  if (dragStartX != null && tlPointers.has(e.pointerId)) {
+    const perPx = view.timeWindow / tl.getBoundingClientRect().width
+    view.scrollBack = Math.max(0, dragBase + (e.clientX - dragStartX) * perPx)
+  }
+  view.hoverTime = timeAtX(tl, e.clientX, view, displayNow())
+})
+
+function endTimelinePointer (e) {
+  const wasTap = dragStartX != null && Math.abs(e.clientX - dragStartX) < 4 && !pinch
+  tlPointers.delete(e.pointerId)
+  if (tlPointers.size < 2) pinch = null
+  if (!tlPointers.size) dragStartX = null
+
+  if (wasTap) {
+    // A tap without a drag pins the inspect cursor (tap again to release).
     const t = timeAtX(tl, e.clientX, view, displayNow())
     view.inspectTime = view.inspectTime != null ? null : t
   }
-  dragX = null
-})
-window.addEventListener('mousemove', e => {
-  if (dragX != null) {
-    const perPx = view.timeWindow / tl.getBoundingClientRect().width
-    view.scrollBack = Math.max(0, dragBase + (e.clientX - dragX) * perPx)
+  // A finger leaves no cursor behind, so the hover readout goes with it.
+  if (e.pointerType !== 'mouse') {
+    view.hoverTime = null
+    $('tooltip').classList.remove('show')
   }
+}
+
+tl.addEventListener('pointerup', endTimelinePointer)
+tl.addEventListener('pointercancel', endTimelinePointer)
+tl.addEventListener('pointerleave', e => {
+  if (e.pointerType !== 'mouse' || tlPointers.size) return
+  view.hoverTime = null
+  $('tooltip').classList.remove('show')
 })
-tl.addEventListener('mousemove', e => { view.hoverTime = timeAtX(tl, e.clientX, view, displayNow()) })
-tl.addEventListener('mouseleave', () => { view.hoverTime = null; $('tooltip').classList.remove('show') })
+
+// ---------------------------------------------------------------- chrome UI --
+$('settingsBtn').onclick = () => {
+  const open = $('controls').classList.toggle('open')
+  $('settingsBtn').setAttribute('aria-expanded', String(open))
+}
+
+let toastTimer = 0
+function toast (message) {
+  const el = $('toast')
+  el.textContent = message
+  el.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200)
+}
+
+const canFullscreen = !!document.documentElement.requestFullscreen
+if (!canFullscreen) $('fsBtn').style.display = 'none'   // iPhone Safari has no Fullscreen API
+
+function toggleFullscreen () {
+  if (!canFullscreen) return
+  if (document.fullscreenElement) { document.exitFullscreen(); return }
+  // Some embedded browser views refuse fullscreen outright. Say so rather than
+  // leaving a button that appears to do nothing.
+  document.querySelector('.app').requestFullscreen()
+    .catch(() => toast('This browser view will not allow fullscreen — try the page in a normal browser tab.'))
+}
+$('fsBtn').onclick = toggleFullscreen
+document.addEventListener('fullscreenchange', () => {
+  const on = !!document.fullscreenElement
+  $('fsBtn').classList.toggle('on', on)
+  $('fsBtn').title = on ? 'Exit fullscreen (shift+F)' : 'Fullscreen (shift+F)'
+})
 
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return
   if (e.code === 'Space') { e.preventDefault(); engine.running ? stopMic() : startMic() }
   if (e.key === 'r' || e.key === 'R') { engine.clear(); view.scrollBack = 0 }
-  if (e.key === 'f' || e.key === 'F') $('freezeBtn').click()
+  if ((e.key === 'f' || e.key === 'F') && !e.shiftKey) $('freezeBtn').click()
   if (e.key === 'Escape') synth.allOff()
+  if (e.shiftKey && (e.key === 'F' || e.key === 'f')) { e.preventDefault(); toggleFullscreen() }
 })
 
 // ----------------------------------------------------------------- exports --

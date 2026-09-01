@@ -1,6 +1,6 @@
 import { fitCanvas } from './view.js'
 import { tuningColor } from '../core/notes.js'
-import { labelFor } from '../core/sargam.js'
+import { labelCandidates } from '../core/sargam.js'
 
 // One cell per beat, showing the note that occupied most of that beat. This is
 // the rhythm read-out: what did I sing on beat 1, 2, 3, 4.
@@ -17,6 +17,18 @@ export function drawBeatLane (canvas, { view, transport, segs, now }) {
   const beatDur = transport.beatDuration()
   const first = Math.max(0, Math.floor(start / beatDur))
   const last = Math.ceil(end / beatDur)
+
+  // Pick one label style for the whole lane — the most informative one that
+  // fits every cell. Choosing per cell would mix scripts across a single bar.
+  ctx.font = '11px ' + view.labelFont
+  const cellRoom = (w / Math.max(1, last - first)) - 10
+  let style = 0
+  for (const s of segs) {
+    const options = labelCandidates(s.semitone, view)
+    let i = options.findIndex(t => ctx.measureText(t).width <= cellRoom)
+    if (i < 0) i = options.length - 1
+    style = Math.max(style, i)
+  }
 
   for (let b = first; b <= last; b++) {
     const t0 = b * beatDur
@@ -42,7 +54,8 @@ export function drawBeatLane (canvas, { view, transport, segs, now }) {
       ctx.fillStyle = tuningColor(best.cents, 0.28)
       ctx.fillRect(x0 + 1, 4, x1 - x0 - 2, h - 8)
       ctx.fillStyle = tuningColor(best.cents, 1)
-      ctx.fillText(labelFor(best.semitone, view, { short: true }), x0 + 6, h / 2 + 4)
+      const options = labelCandidates(best.semitone, view)
+      ctx.fillText(options[Math.min(style, options.length - 1)], x0 + 6, h / 2 + 4)
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.2)'
       ctx.fillText('–', x0 + 6, h / 2 + 4)

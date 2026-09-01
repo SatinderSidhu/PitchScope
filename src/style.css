@@ -28,14 +28,21 @@ html, body {
 
 /* ---------- control bar ---------- */
 .bar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 12px;
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+.bar-main, .bar-controls {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
 }
+.bar-main { margin-bottom: 8px; }
+.only-narrow { display: none; }
 .bar .sep { width: 1px; height: 20px; background: var(--line); }
 .bar .spacer { flex: 1; }
 
@@ -81,6 +88,10 @@ button.big { padding: 12px 22px; font-size: 15px; margin: 14px 0 10px; }
 button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--accent); color: var(--accent); }
 
 /* ---------- stage ---------- */
+/* Canvases handle their own gestures, so the browser must not steal them for
+   scrolling or double-tap zoom. */
+.timeline, .piano, .rail, .beatlane { touch-action: none; }
+
 .stage {
   display: grid;
   grid-template-columns: 268px 1fr;
@@ -192,6 +203,27 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
   border-radius: 10px;
 }
 
+/* ---------- transient message ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 12px);
+  background: rgba(12, 17, 25, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 12px;
+  color: var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s, transform 0.18s;
+  z-index: 30;
+  max-width: min(420px, calc(100vw - 32px));
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
 /* ---------- mic gate ---------- */
 .gate {
   position: fixed;
@@ -206,3 +238,61 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
 .gate-card h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.02em; }
 .gate-card p { color: var(--dim); margin: 0; }
 .gate-card small { display: block; color: var(--dim); font-size: 11px; }
+
+
+/* ---------- fullscreen ---------- */
+/* In fullscreen the app owns the whole viewport; drop the outer padding so the
+   graph gets the pixels. */
+.app:fullscreen { background: var(--bg); }
+.app:fullscreen .stage { padding: 8px; }
+.app:fullscreen .piano-wrap { padding: 0 8px 8px; }
+
+/* ---------- phones and narrow windows ---------- */
+@media (max-width: 860px) {
+  .only-narrow { display: inline-block; }
+
+  /* The full control set collapses behind the Setup button. */
+  .bar-controls { display: none; }
+  .bar-controls.open { display: flex; }
+  .bar-main { margin-bottom: 0; }
+  .bar-controls.open { margin-top: 8px; }
+  .field select { max-width: 130px; }
+
+  .stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+
+  /* The readout becomes a single compact strip above the graph: the note, and
+     the cents meter you actually watch while singing. */
+  .side { flex-direction: row; align-items: center; gap: 12px; padding: 8px 12px; }
+  .now { text-align: left; flex: 0 0 auto; min-width: 92px; }
+  .note-big { font-size: 34px; }
+  .note-alt { font-size: 11px; }
+  .cents { margin-top: 2px; }
+  .meter { flex: 1; height: 58px; min-width: 0; }
+  .stats, .history, .history-head, .hint { display: none; }
+
+  .graph { grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 38px; }
+  .rail, .rail-wrap { width: 44px; }
+  .beatlane { height: 38px; }
+  .lane-label { font-size: 8px; }
+
+  .piano-wrap { padding: 0 8px 8px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  .piano { height: 96px; }
+
+  .gate-card { padding: 24px; }
+  .gate-card h1 { font-size: 26px; }
+}
+
+/* Landscape on a phone: very little height, so trim the fixed-height rows. */
+@media (max-height: 520px) and (max-width: 960px) {
+  .side { padding: 4px 10px; }
+  .note-big { font-size: 26px; }
+  .meter { height: 44px; }
+  .piano { height: 74px; }
+  .beatlane { height: 30px; }
+  .graph { grid-template-rows: minmax(0, 1fr) 30px; }
+}

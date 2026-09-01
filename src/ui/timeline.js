@@ -1,6 +1,6 @@
 import { fitCanvas, buildSegments } from './view.js'
 import { isBlackKey, tuningColor, inDegrees } from '../core/notes.js'
-import { labelFor, isSa } from '../core/sargam.js'
+import { labelFor, labelCandidates, isSa } from '../core/sargam.js'
 
 // The main piano-roll: quantised note blocks with the true pitch curve drawn on
 // top, over a grid whose vertical lines are beats and bars.
@@ -79,11 +79,14 @@ export function drawTimeline (canvas, { view, frames, transport, now }) {
     ctx.lineWidth = 1
     ctx.strokeRect(x0 + 0.5, y + 1.5, x1 - x0 - 1, rowH - 3)
 
-    const text = labelFor(s.semitone, view, { short: true })
-    if (x1 - x0 > 8 + text.length * 6 && rowH > 11) {
-      ctx.fillStyle = 'rgba(255,255,255,0.82)'
+    if (rowH > 11) {
       ctx.font = '10px ' + view.labelFont
-      ctx.fillText(text, x0 + 4, y + rowH / 2 + 3.5)
+      const room = x1 - x0 - 8
+      const text = labelCandidates(s.semitone, view).find(t => ctx.measureText(t).width <= room)
+      if (text) {
+        ctx.fillStyle = 'rgba(255,255,255,0.82)'
+        ctx.fillText(text, x0 + 4, y + rowH / 2 + 3.5)
+      }
     }
   }
 

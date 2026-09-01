@@ -2,7 +2,10 @@ import { fitCanvas } from './view.js'
 import { isBlackKey, noteName, tuningColor, pitchClass } from '../core/notes.js'
 import { sargamName, isSa } from '../core/sargam.js'
 
-const PLAYED = '#ffb347'   // a key you pressed, as opposed to one you sang
+// Violet for a key you pressed. Deliberately outside the green/amber/red
+// tuning scale and the cyan of notes you sang, so the reference tone can never
+// be misread as "you are singing sharp".
+const PLAYED = '#a78bfa'
 
 // Key geometry, shared by the renderer and the hit test so a click always lands
 // on the key it looks like it landed on.
@@ -80,7 +83,7 @@ export function drawKeyRail (canvas, { view, active, recent, playing }) {
       const text = labelText(m, view, !anchor)
       ctx.fillStyle = age != null || black ? 'rgba(226,236,248,0.75)' : '#2a3140'
       if (!black && age == null) ctx.fillStyle = anchor ? '#1d2531' : '#5c6675'
-      if (isPlaying) ctx.fillStyle = '#3a2708'
+      if (isPlaying) ctx.fillStyle = '#1b1030'
       ctx.font = (anchor ? 'bold ' : '') + '9px ' + view.labelFont
       const tw = ctx.measureText(text).width
       ctx.fillText(text, Math.max(2, w - tw - 4), y + rowH - Math.max(3, (rowH - 8) / 2))

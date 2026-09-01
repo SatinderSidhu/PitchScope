@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070a0f" />
+  <!-- Added to the home screen on a phone, it runs without browser chrome. -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PitchScope" />
   <title>PitchScope — live vocal pitch &amp; beat</title>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
@@ -10,9 +16,16 @@
   <div class="app">
 
     <header class="bar">
-      <button id="recBtn" class="rec">● Start</button>
-      <button id="clearBtn" class="ghost">Clear</button>
-      <span class="sep"></span>
+      <div class="bar-main">
+        <button id="recBtn" class="rec">● Start</button>
+        <button id="clearBtn" class="ghost">Clear</button>
+        <button id="settingsBtn" class="ghost only-narrow" aria-expanded="false">⚙ Setup</button>
+        <span class="spacer"></span>
+        <button id="freezeBtn" class="ghost">Freeze</button>
+        <button id="fsBtn" class="ghost" title="Fullscreen (shift+F)">⛶</button>
+      </div>
+
+      <div class="bar-controls" id="controls">
 
       <label class="field">Mic
         <select id="deviceSel"></select>
@@ -86,10 +99,10 @@
       <label class="check"><input id="autoChk" type="checkbox" checked /> auto range</label>
       <label class="check"><input id="flatChk" type="checkbox" /> flats</label>
 
-      <span class="spacer"></span>
-      <button id="freezeBtn" class="ghost">Freeze</button>
-      <button id="pngBtn" class="ghost">PNG</button>
-      <button id="csvBtn" class="ghost">CSV</button>
+        <span class="sep"></span>
+        <button id="pngBtn" class="ghost">PNG</button>
+        <button id="csvBtn" class="ghost">CSV</button>
+      </div>
     </header>
 
     <main class="stage">
@@ -134,6 +147,8 @@
     <footer class="piano-wrap">
       <canvas id="piano" class="piano"></canvas>
     </footer>
+
+    <div id="toast" class="toast"></div>
 
     <div id="gate" class="gate">
       <div class="gate-card">

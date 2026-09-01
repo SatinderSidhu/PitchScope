@@ -27,6 +27,11 @@ western names, or both at once, with a Sa you choose.
   6/8, 7/8, with an optional metronome
 - **Sargam** — configurable Sa (B2 by default), all twelve swaras with komal and
   teevra, saptak markers, and the ten thaats for scale highlighting
+- **Fullscreen** — a toggle in the bar, or shift+F
+- **Works on a phone** — the layout collapses to a single column with the
+  controls behind a Setup button, and every gesture is touch-native: tap or
+  slide the keys (several fingers at once), drag the graph to scrub back
+  through history, pinch it to zoom the time window
 - **Export** — the graph as PNG, or the session as CSV (note, swara, saptak,
   cents, vibrato, bar and beat per sung note)
 
