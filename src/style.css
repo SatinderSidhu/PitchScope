@@ -1,0 +1,205 @@
+:root {
+  --bg: #070a0f;
+  --panel: #0d1219;
+  --panel-2: #111823;
+  --line: rgba(255, 255, 255, 0.08);
+  --text: #e6edf7;
+  --dim: #8b98ab;
+  --accent: #5ad9ff;
+  --good: #22c55e;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+  overflow: hidden;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+}
+
+/* ---------- control bar ---------- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.bar .sep { width: 1px; height: 20px; background: var(--line); }
+.bar .spacer { flex: 1; }
+
+.field, .check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.field select option { font-family: -apple-system, 'Noto Sans Gurmukhi', sans-serif; }
+.field select, .field input {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font: 12px ui-monospace, Menlo, monospace;
+  text-transform: none;
+}
+.field input[type=number] { width: 60px; }
+.field select { max-width: 190px; }
+.check input { accent-color: var(--accent); }
+
+button {
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--panel-2);
+  color: var(--text);
+  transition: background 0.15s, border-color 0.15s;
+}
+button:hover { border-color: rgba(255, 255, 255, 0.24); }
+button.rec { background: #b91c2c; border-color: #d43a4a; color: #fff; }
+button.rec.on { background: #22c55e; border-color: #4ade80; color: #04240f; }
+button.big { padding: 12px 22px; font-size: 15px; margin: 14px 0 10px; }
+button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--accent); color: var(--accent); }
+
+/* ---------- stage ---------- */
+.stage {
+  display: grid;
+  grid-template-columns: 268px 1fr;
+  gap: 10px;
+  padding: 10px;
+  min-height: 0;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 0;
+}
+.now { text-align: center; }
+.note-big {
+  font: 700 56px/1.1 ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.note-alt {
+  font: 13px/1.4 ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
+  color: var(--dim);
+  margin-top: 2px;
+}
+.cents { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 6px; }
+.meter { width: 100%; height: 78px; }
+
+.stats { display: grid; gap: 4px; font-size: 11px; }
+.stats div { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+.stats span { color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; }
+.stats b { font: 12px ui-monospace, Menlo, monospace; }
+
+.history-head { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin-top: 4px; }
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 60px;
+  font: 12px ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN', monospace;
+}
+.history li { display: flex; justify-content: space-between; padding: 3px 4px; border-radius: 4px; }
+.history li:nth-child(odd) { background: rgba(255, 255, 255, 0.03); }
+
+.hint { font-size: 10px; color: var(--dim); line-height: 1.6; border-top: 1px solid var(--line); padding-top: 8px; }
+.hint b { color: var(--text); font-family: ui-monospace, Menlo, monospace; }
+
+/* ---------- graph ---------- */
+.graph {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 46px;
+  gap: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+/* Canvases are absolutely positioned so their intrinsic size can never feed
+   back into the grid track sizing (which makes them grow without bound). */
+.rail-wrap, .tl-wrap { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.rail, .timeline { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.timeline { cursor: crosshair; }
+.beatlane { width: 100%; height: 46px; display: block; border-top: 1px solid var(--line); }
+.lane-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  background: #0a0d13;
+  border-top: 1px solid var(--line);
+}
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(8, 12, 18, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: 11px ui-monospace, Menlo, monospace;
+  white-space: pre;
+  opacity: 0;
+  transform: translate(-50%, -120%);
+  transition: opacity 0.1s;
+}
+.tooltip.show { opacity: 1; }
+
+/* ---------- piano ---------- */
+.piano-wrap { padding: 0 10px 10px; }
+.piano {
+  width: 100%;
+  height: 116px;
+  display: block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+/* ---------- mic gate ---------- */
+.gate {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 11, 0.94);
+  display: grid;
+  place-items: center;
+  z-index: 20;
+}
+.gate.hidden { display: none; }
+.gate-card { text-align: center; max-width: 420px; padding: 30px; }
+.gate-card h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.02em; }
+.gate-card p { color: var(--dim); margin: 0; }
+.gate-card small { display: block; color: var(--dim); font-size: 11px; }

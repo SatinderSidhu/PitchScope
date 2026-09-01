@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PitchScope — live vocal pitch &amp; beat</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <header class="bar">
+      <button id="recBtn" class="rec">● Start</button>
+      <button id="clearBtn" class="ghost">Clear</button>
+      <span class="sep"></span>
+
+      <label class="field">Mic
+        <select id="deviceSel"></select>
+      </label>
+
+      <label class="field">A4
+        <input id="a4" type="number" min="392" max="466" step="1" value="440" />
+      </label>
+
+      <label class="field">Sa
+        <select id="saNoteSel"></select>
+        <select id="saOctSel"></select>
+      </label>
+
+      <label class="field">Scale
+        <select id="scaleSel">
+          <option value="chromatic" selected>chromatic (all 12)</option>
+          <optgroup label="Thaat">
+            <option value="bilawal">Bilawal ਬਿਲਾਵਲ</option>
+            <option value="khamaj">Khamaj ਖਮਾਜ</option>
+            <option value="kafi">Kafi ਕਾਫੀ</option>
+            <option value="asavari">Asavari ਆਸਾਵਰੀ</option>
+            <option value="bhairavi">Bhairavi ਭੈਰਵੀ</option>
+            <option value="bhairav">Bhairav ਭੈਰਵ</option>
+            <option value="kalyan">Kalyan ਕਲਿਆਣ</option>
+            <option value="marwa">Marwa ਮਾਰਵਾ</option>
+            <option value="poorvi">Poorvi ਪੂਰਵੀ</option>
+            <option value="todi">Todi ਤੋੜੀ</option>
+          </optgroup>
+          <optgroup label="Western">
+            <option value="major">major</option>
+            <option value="minor">natural minor</option>
+          </optgroup>
+        </select>
+      </label>
+
+      <label class="field">Labels
+        <select id="labelSel">
+          <option value="both" selected>both</option>
+          <option value="punjabi">ਪੰਜਾਬੀ ਸਰਗਮ</option>
+          <option value="sargam">Sargam (roman)</option>
+          <option value="west">Western</option>
+        </select>
+      </label>
+
+      <span class="sep"></span>
+
+      <label class="field">♩=
+        <input id="bpm" type="number" min="30" max="240" step="1" value="80" />
+      </label>
+      <label class="field">Meter
+        <select id="meterSel">
+          <option value="4" selected>4 / 4</option>
+          <option value="3">3 / 4</option>
+          <option value="2">2 / 4</option>
+          <option value="5">5 / 4</option>
+          <option value="6">6 / 8</option>
+          <option value="7">7 / 8</option>
+        </select>
+      </label>
+      <label class="check"><input id="clickChk" type="checkbox" /> metronome</label>
+
+      <span class="sep"></span>
+      <label class="check"><input id="autoChk" type="checkbox" checked /> auto range</label>
+      <label class="check"><input id="flatChk" type="checkbox" /> flats</label>
+
+      <span class="spacer"></span>
+      <button id="freezeBtn" class="ghost">Freeze</button>
+      <button id="pngBtn" class="ghost">PNG</button>
+      <button id="csvBtn" class="ghost">CSV</button>
+    </header>
+
+    <main class="stage">
+
+      <aside class="side">
+        <div class="now">
+          <div id="noteBig" class="note-big">—</div>
+          <div id="altBig" class="note-alt">&nbsp;</div>
+          <div id="centsTxt" class="cents">listening…</div>
+        </div>
+        <canvas id="meter" class="meter"></canvas>
+        <div class="stats">
+          <div><span>Frequency</span><b id="hzTxt">— Hz</b></div>
+          <div><span>Target</span><b id="targetTxt">—</b></div>
+          <div><span>Confidence</span><b id="confTxt">—</b></div>
+          <div><span>Position</span><b id="posTxt">bar 1 · beat 1</b></div>
+          <div><span>Saptak</span><b id="saptakTxt">—</b></div>
+        </div>
+        <div class="history-head">Recent notes</div>
+        <ul id="history" class="history"></ul>
+        <div class="hint">
+          <b>space</b> record · <b>R</b> clear · <b>F</b> freeze<br />
+          scroll = zoom time · shift+scroll = zoom pitch<br />
+          drag = scrub history · click = inspect a moment
+        </div>
+      </aside>
+
+      <section class="graph">
+        <div class="rail-wrap"><canvas id="rail" class="rail"></canvas></div>
+        <div class="tl-wrap">
+          <canvas id="timeline" class="timeline"></canvas>
+          <div id="tooltip" class="tooltip"></div>
+        </div>
+        <div class="lane-label">beats</div>
+        <canvas id="beatlane" class="beatlane"></canvas>
+      </section>
+
+    </main>
+
+    <footer class="piano-wrap">
+      <canvas id="piano" class="piano"></canvas>
+    </footer>
+
+    <div id="gate" class="gate">
+      <div class="gate-card">
+        <h1>PitchScope</h1>
+        <p>Sing into your mic and watch the notes, tuning and beat grid in real time.</p>
+        <button id="gateBtn" class="rec big">● Enable microphone</button>
+        <small>Audio never leaves this machine — everything is analysed in the browser.</small>
+      </div>
+    </div>
+
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
