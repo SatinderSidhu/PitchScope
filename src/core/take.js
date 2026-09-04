@@ -5,6 +5,7 @@
 // audio.
 
 export const TRACK_RATE = 50   // samples per second
+const MAX_HOLD = 0.25          // seconds a single frame may cover before it becomes a gap
 
 // midi is stored as hundredths of a semitone; 0 marks silence, which is
 // unambiguous because sung pitch never approaches MIDI 0.
@@ -13,15 +14,24 @@ export function encodeTrack (frames, duration) {
   const midi = new Int16Array(n)
   const clarity = new Uint8Array(n)
 
-  let i = 0
-  for (let s = 0; s < n; s++) {
-    const t = s / TRACK_RATE
-    // Advance to the frame nearest this sample time.
-    while (i < frames.length - 1 && frames[i + 1].t <= t) i++
+  // Each voiced frame is held until the next one, the way the live renderer
+  // joins consecutive frames. Sampling the nearest frame instead would punch
+  // holes in the track whenever capture ran slower than the grid — which is
+  // exactly what happens if the browser throttles the tab mid-take.
+  for (let i = 0; i < frames.length; i++) {
     const f = frames[i]
-    if (!f || Math.abs(f.t - t) > 0.2 || f.midi <= 0) continue   // gap or silence
-    midi[s] = Math.round(f.midi * 100)
-    clarity[s] = Math.round(Math.min(1, f.clarity) * 255)
+    if (f.midi <= 0) continue                  // silence stays silence
+    const next = frames[i + 1]
+    const until = Math.min(
+      next ? next.t : f.t + 1 / TRACK_RATE,
+      f.t + MAX_HOLD                            // never invent more than this
+    )
+    const value = Math.round(f.midi * 100)
+    const conf = Math.round(Math.min(1, f.clarity) * 255)
+    for (let s = Math.max(0, Math.ceil(f.t * TRACK_RATE)); s < n && s / TRACK_RATE < until; s++) {
+      midi[s] = value
+      clarity[s] = conf
+    }
   }
   return { midi, clarity, rate: TRACK_RATE }
 }

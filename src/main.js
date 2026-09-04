@@ -439,8 +439,9 @@ function displayNow () {
   return view.frozen ? frozenNow : engine.now
 }
 
-function frameNear (t) {
-  const frames = engine.frames
+// The frames array is either the live capture or a take being replayed, so
+// callers pass it in rather than assuming the live one.
+function frameNear (frames, t) {
   if (!frames.length) return null
   let lo = 0
   let hi = frames.length - 1
@@ -454,12 +455,11 @@ function frameNear (t) {
 
 function render () {
   requestAnimationFrame(render)
+  if (replay) advanceReplay()     // before displayNow, so the readout is never a frame behind
   const now = displayNow()
   view.ease()
 
   const frames = replay ? replay.frames : engine.frames
-
-  if (replay) advanceReplay()
 
   // Auto-range from the last 20 s of voiced material.
   if (view.autoRange && frames.length) {
@@ -474,9 +474,12 @@ function render () {
   }
 
   // Which key is lit, and what recently faded.
+  // Frames ahead of the playhead are skipped: replaying a take, the rest of the
+  // recording is still in the array and would light up every key it ever holds.
   const recent = new Map()
   for (let i = frames.length - 1; i >= 0; i--) {
     const f = frames[i]
+    if (f.t > now) continue
     const age = now - f.t
     if (age > 2.5) break
     if (f.midi <= 0) continue
@@ -485,7 +488,11 @@ function render () {
   }
 
   const live = engine.running && !replay && !view.frozen && view.inspectTime == null
-  const cursorFrame = view.inspectTime != null ? frameNear(view.inspectTime) : frames[frames.length - 1]
+  // Live, the newest frame is the current one. In a replay it is the end of the
+  // take, so the frame at the playhead has to be looked up instead.
+  const cursorFrame = view.inspectTime != null ? frameNear(frames, view.inspectTime)
+    : replay ? frameNear(frames, now)
+      : frames[frames.length - 1]
   if (cursorFrame && cursorFrame.midi > 0) lastVoiced = cursorFrame
   const shown = cursorFrame && cursorFrame.midi > 0 ? cursorFrame
     : (lastVoiced && now - lastVoiced.t < 1.2 ? lastVoiced : null)
@@ -527,7 +534,7 @@ function render () {
     $('altBig').innerHTML = '&nbsp;'
     $('saptakTxt').textContent = '—'
     $('noteBig').style.color = ''
-    $('centsTxt').textContent = engine.running ? 'listening…' : 'stopped'
+    $('centsTxt').textContent = replay ? 'silence' : engine.running ? 'listening…' : 'stopped'
     $('hzTxt').textContent = '— Hz'
     $('targetTxt').textContent = '—'
     $('confTxt').textContent = '—'
@@ -542,7 +549,7 @@ function render () {
   // ---- hover tooltip ----
   const tip = $('tooltip')
   if (view.hoverTime != null && frames.length) {
-    const f = frameNear(view.hoverTime)
+    const f = frameNear(frames, view.hoverTime)
     if (f) {
       const b = transport.beatAt(f.t)
       const rect = tl.getBoundingClientRect()
@@ -608,13 +615,23 @@ async function startRecording () {
   const gotAudio = wantAudio ? recorder.start(engine.state.stream) : false
   if (wantAudio && !gotAudio) toast('Audio capture is unavailable here — the pitch track will still be saved.')
 
-  recording = { startedAt: Date.now(), audio: gotAudio }
+  recording = { startedAt: Date.now(), audio: gotAudio, warnedHidden: false }
+  // Browsers throttle animation frames in a background tab, which stops the
+  // pitch analysis even though the audio keeps recording. Say so once.
+  document.addEventListener('visibilitychange', warnIfHidden)
   $('recordBtn').classList.add('rec-on')
   $('recordBtn').textContent = '⏹ Stop rec'
 }
 
+function warnIfHidden () {
+  if (!recording || !document.hidden || recording.warnedHidden) return
+  recording.warnedHidden = true
+  toast('Keep this tab in front while recording — the pitch track pauses when it is hidden (audio keeps going).')
+}
+
 async function stopRecording () {
   if (!recording) return
+  document.removeEventListener('visibilitychange', warnIfHidden)
   const { startedAt } = recording
   recording = null
   $('recordBtn').classList.remove('rec-on')
@@ -912,4 +929,4 @@ function renderAccuracy (segs) {
 }
 
 // Exposed for debugging from the console (and for feeding synthetic frames).
-window.pitchscope = { engine, view, transport, synth }
+window.pitchscope = { engine, view, transport, synth, get replay () { return replay } }
