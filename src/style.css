@@ -324,7 +324,17 @@ button.rec-on {
   gap: 6px 10px;
   align-items: center;
 }
-.takes .t-name { font-size: 13px; font-weight: 600; }
+.takes .t-name { font-size: 13px; font-weight: 600; cursor: text; }
+.takes .t-name:hover { text-decoration: underline dotted rgba(255, 255, 255, 0.35); }
+.t-rename {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  padding: 3px 6px;
+  font: 600 13px -apple-system, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic', sans-serif;
+}
 .takes .t-meta { grid-column: 1 / -1; font: 10px ui-monospace, Menlo, monospace; color: var(--dim); }
 .takes .t-actions { display: flex; gap: 6px; }
 .takes button { padding: 4px 9px; font-size: 11px; }

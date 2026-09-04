@@ -794,7 +794,7 @@ async function renderTakes () {
   } else {
     list.innerHTML = takes.map(t => `
       <li data-id="${t.id}">
-        <span class="t-name">${escapeHtml(t.name)}</span>
+        <span class="t-name" title="Click to rename">${escapeHtml(t.name)}</span>
         <span class="t-actions">
           <button data-act="play">▶ Replay</button>
           <button data-act="rename">Rename</button>
@@ -811,19 +811,50 @@ async function renderTakes () {
     : `${takes.length} take${takes.length === 1 ? '' : 's'} stored in this browser`
 }
 
+// Renaming happens in place rather than through a prompt() dialog: browsers
+// can suppress those silently, and clicking the title is what people try first.
+function beginRename (row, id) {
+  const nameEl = row.querySelector('.t-name')
+  if (nameEl.querySelector('input')) return
+  const current = nameEl.textContent
+
+  nameEl.innerHTML = '<input class="t-rename" maxlength="80" />'
+  const input = nameEl.querySelector('input')
+  input.value = current
+  input.focus()
+  input.select()
+
+  let settled = false
+  const finish = async keep => {
+    if (settled) return              // Enter commits, then blur fires: only act once
+    settled = true
+    const value = input.value.trim()
+    if (keep && value && value !== current) {
+      try { await renameTake(id, value) } catch { toast('Could not save that name.') }
+    }
+    renderTakes()
+  }
+  input.onkeydown = e => {
+    e.stopPropagation()              // keep space/R/F from reaching the app shortcuts
+    if (e.key === 'Enter') finish(true)
+    if (e.key === 'Escape') finish(false)
+  }
+  input.onblur = () => finish(true)
+}
+
 $('takesList').onclick = async e => {
-  const button = e.target.closest('button')
   const row = e.target.closest('li[data-id]')
-  if (!button || !row) return
+  if (!row) return
   const id = row.dataset.id
+
+  if (e.target.closest('.t-name')) return beginRename(row, id)
+
+  const button = e.target.closest('button')
+  if (!button) return
   const act = button.dataset.act
 
   if (act === 'play') return openTake(id)
-  if (act === 'rename') {
-    const name = prompt('Name this take', row.querySelector('.t-name').textContent)
-    if (name) { await renameTake(id, name.slice(0, 80)); renderTakes() }
-    return
-  }
+  if (act === 'rename') return beginRename(row, id)
   if (act === 'delete') {
     if (!confirm('Delete this take permanently?')) return
     if (replay?.meta.id === id) exitReplay()
