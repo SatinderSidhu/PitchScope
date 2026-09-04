@@ -13,6 +13,7 @@ import { loadSettings, saveSettings } from './core/settings.js'
 import { createRecorder } from './audio/recorder.js'
 import { saveTake, listTakes, loadTake, deleteTake, renameTake, storageUsage } from './core/storage.js'
 import { encodeTrack, decodeTrack, snapshotSettings, applySettings, formatTime, defaultName } from './core/take.js'
+import { quantize, buildSheet, cellText, toText, toMidi, sheetHeader } from './core/notation.js'
 import { createTransport } from './core/transport.js'
 import { createView, buildSegments } from './ui/view.js'
 import { drawTimeline, timeAtX } from './ui/timeline.js'
@@ -833,6 +834,98 @@ $('takesList').onclick = async e => {
 
 const escapeHtml = str => str.replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+// --------------------------------------------------------------- notation --
+// What was sung, snapped onto the beat grid and written out as sargam a
+// musician can play from — plus a MIDI file for anyone who would rather load it
+// into an instrument or notation app.
+
+let sheetState = null    // { sheet, quantized, header, title }
+
+$('notesBtn').onclick = () => {
+  const panel = $('notesPanel')
+  panel.hidden = !panel.hidden
+  if (!panel.hidden) { $('takesPanel').hidden = true; buildNotation() }
+}
+$('notesCloseBtn').onclick = () => { $('notesPanel').hidden = true }
+$('divisionSel').onchange = () => buildNotation()
+
+function buildNotation () {
+  // Whatever is on screen: the take being replayed, or the live session.
+  const frames = replay ? replay.frames : engine.frames
+  const title = replay ? replay.meta.name : 'Live session'
+  const segs = buildSegments(frames, { minDur: MIN_HELD })
+
+  const sheetEl = $('sheet')
+  if (!segs.length) {
+    sheetState = null
+    $('sheetHeader').textContent = ''
+    sheetEl.innerHTML = '<div class="sheet-empty">Sing a phrase (or open a take) and it will be written out here.</div>'
+    return
+  }
+
+  const division = Number($('divisionSel').value)
+  const quantized = quantize(segs, { bpm: transport.state.bpm, division })
+  const sheet = buildSheet(quantized, { beatsPerBar: transport.state.beatsPerBar, division })
+  const header = sheetHeader({
+    view, engine, transport, source: title,
+    noteCount: quantized.events.filter(e => e.semitone != null).length
+  })
+
+  sheetState = { sheet, quantized, header, title }
+  $('sheetHeader').textContent = header.join('\n')
+  renderSheet(sheetEl, sheet)
+}
+
+function renderSheet (container, sheet) {
+  container.innerHTML = sheet.bars.map((bar, barIndex) => {
+    const beats = []
+    for (let b = 0; b < bar.length; b += sheet.division) {
+      const cells = bar.slice(b, b + sheet.division).map(cell => {
+        const text = cellText(cell, view)
+        const cls = cell.held ? 'cell held' : cell.rest ? 'cell rest' : 'cell'
+        // The western name rides along under each swara, so a musician who
+        // reads one system or the other can play from the same sheet.
+        const west = !cell.held && !cell.rest && view.labelMode !== 'west'
+          ? `<span class="west">${noteName(cell.semitone, view.useFlats)}</span>`
+          : ''
+        return `<span class="${cls}">${text}${west}</span>`
+      }).join('')
+      beats.push(`<span class="beat-group${b === 0 ? ' downbeat' : ''}">${cells}</span>`)
+    }
+    return `<div class="bar-row"><span class="bar-num">${barIndex + 1}</span><span class="bar-beats">${beats.join('')}</span></div>`
+  }).join('')
+}
+
+$('copyNotesBtn').onclick = async () => {
+  if (!sheetState) return
+  const text = toText(sheetState.sheet, view, sheetState.header)
+  try {
+    await navigator.clipboard.writeText(text)
+    toast('Notation copied — paste it to your musician.')
+  } catch {
+    toast('Clipboard is blocked here; use Download .txt instead.')
+  }
+}
+
+$('txtBtn').onclick = () => {
+  if (!sheetState) return
+  const text = toText(sheetState.sheet, view, sheetState.header)
+  download(new Blob([text], { type: 'text/plain' }), safeFileName(sheetState.title) + '.txt')
+}
+
+$('midiBtn').onclick = () => {
+  if (!sheetState) return
+  const bytes = toMidi(sheetState.quantized, {
+    bpm: transport.state.bpm,
+    beatsPerBar: transport.state.beatsPerBar,
+    division: sheetState.sheet.division,
+    name: sheetState.title
+  })
+  download(new Blob([bytes], { type: 'audio/midi' }), safeFileName(sheetState.title) + '.mid')
+}
+
+const safeFileName = str => str.replace(/[^\w\d-]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'take'
 
 // ------------------------------------------------------- history & accuracy --
 // The lists cover the whole session, not just what is on screen, so a singer

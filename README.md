@@ -44,6 +44,9 @@ names, or in both systems at once, with a Sa you choose.
   on your own machine (IndexedDB) with its audio and its pitch track, and can be
   replayed with the graph, keyboards and accuracy lists moving in sync with the
   recording, so you can hear a phrase and see exactly where it drifted
+- **Notation** — what you sang, snapped onto the beat grid and written out as
+  sargam with the western name under each swara, laid out in bars of the chosen
+  taal. Copy it as text, download it, or export a `.mid` file to hand a musician
 - **Settings are remembered** — Sa, scale, labelling, tempo, meter, reference
   pitch and volume are stored in the browser and restored on the next visit
 - **Export** — the graph as PNG, or the session as CSV (note, swara, saptak,

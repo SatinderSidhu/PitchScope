@@ -330,6 +330,51 @@ button.rec-on {
 .takes button { padding: 4px 9px; font-size: 11px; }
 .takes .empty { display: block; color: var(--dim); font-size: 12px; text-align: center; padding: 24px 8px; }
 
+/* ---------- notation sheet ---------- */
+.wide-drawer { width: min(680px, 100vw); }
+.drawer-tools { display: flex; align-items: center; gap: 10px; }
+.drawer-foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.sheet-header {
+  font: 11px/1.6 ui-monospace, Menlo, monospace;
+  color: var(--dim);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  white-space: pre-line;
+}
+.sheet { overflow: auto; flex: 1; }
+
+.bar-row { display: flex; align-items: stretch; gap: 8px; margin-bottom: 6px; }
+.bar-num {
+  flex: 0 0 26px;
+  font: 10px ui-monospace, Menlo, monospace;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.bar-beats { display: flex; flex: 1; border-left: 2px solid rgba(255,255,255,0.3); }
+.beat-group {
+  display: flex;
+  flex: 1;
+  border-right: 1px solid rgba(255,255,255,0.16);
+  padding: 0 2px;
+}
+.beat-group:last-child { border-right: 2px solid rgba(255,255,255,0.3); }
+.beat-group.downbeat { background: rgba(120,170,255,0.06); }
+
+.cell {
+  flex: 1;
+  text-align: center;
+  padding: 7px 2px;
+  font: 14px ui-monospace, Menlo, 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans Arabic', monospace;
+  white-space: nowrap;
+}
+.cell.held { color: var(--dim); }
+.cell.rest { color: rgba(255,255,255,0.22); }
+.cell .west { display: block; font-size: 9px; color: var(--dim); margin-top: 2px; }
+.sheet-empty { color: var(--dim); font-size: 12px; text-align: center; padding: 30px 10px; }
+
 /* ---------- transient message ---------- */
 .toast {
   position: fixed;

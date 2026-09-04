@@ -21,6 +21,7 @@
         <button id="clearBtn" class="ghost">Clear</button>
         <button id="recordBtn" class="ghost">⏺ Rec</button>
         <button id="takesBtn" class="ghost">☰ Takes</button>
+        <button id="notesBtn" class="ghost">♪ Notes</button>
         <button id="settingsBtn" class="ghost only-narrow" aria-expanded="false">⚙ Setup</button>
         <span class="spacer"></span>
         <button id="freezeBtn" class="ghost">Freeze</button>
@@ -174,6 +175,29 @@
     <footer class="piano-wrap">
       <canvas id="piano" class="piano"></canvas>
     </footer>
+
+    <div id="notesPanel" class="drawer wide-drawer" hidden>
+      <div class="drawer-head">
+        <b>Notation</b>
+        <span class="drawer-tools">
+          <label class="field">Grid
+            <select id="divisionSel">
+              <option value="1">1 per beat</option>
+              <option value="2" selected>2 per beat</option>
+              <option value="4">4 per beat</option>
+            </select>
+          </label>
+          <button id="notesCloseBtn" class="ghost">Close</button>
+        </span>
+      </div>
+      <div id="sheetHeader" class="sheet-header"></div>
+      <div id="sheet" class="sheet"></div>
+      <div class="drawer-foot">
+        <button id="copyNotesBtn" class="ghost">Copy text</button>
+        <button id="txtBtn" class="ghost">Download .txt</button>
+        <button id="midiBtn" class="ghost">Download .mid</button>
+      </div>
+    </div>
 
     <div id="takesPanel" class="drawer" hidden>
       <div class="drawer-head">
