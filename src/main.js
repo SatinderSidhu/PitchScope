@@ -604,7 +604,7 @@ async function startRecording () {
   view.scrollBack = 0
   view.inspectTime = null
 
-  const wantAudio = $('audioChk').checked
+  const wantAudio = $('audioChk')?.checked ?? true
   const gotAudio = wantAudio ? recorder.start(engine.state.stream) : false
   if (wantAudio && !gotAudio) toast('Audio capture is unavailable here — the pitch track will still be saved.')
 
@@ -648,7 +648,18 @@ async function stopRecording () {
   }
 }
 
-$('recordBtn').onclick = () => (recording ? stopRecording() : startRecording())
+// Both halves are async, so a throw inside them would otherwise surface only as
+// an unhandled rejection — a button that looks alive and does nothing.
+$('recordBtn').onclick = () => {
+  const action = recording ? stopRecording : startRecording
+  action().catch(err => {
+    console.error('recording failed', err)
+    toast('Recording failed: ' + (err?.message || err))
+    recording = null
+    $('recordBtn').classList.remove('rec-on')
+    $('recordBtn').textContent = '⏺ Rec'
+  })
+}
 
 // ------------------------------------------------------------------ replay --
 async function openTake (id) {
