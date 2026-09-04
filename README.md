@@ -40,13 +40,18 @@ names, or in both systems at once, with a Sa you choose.
 - **Accuracy by note** — the same data averaged per note and sorted worst first,
   so a habit ("my Ga is always 25¢ flat") shows up as a habit rather than as one
   bad attempt
+- **Record and replay takes** — press Rec, sing, press again. The take is stored
+  on your own machine (IndexedDB) with its audio and its pitch track, and can be
+  replayed with the graph, keyboards and accuracy lists moving in sync with the
+  recording, so you can hear a phrase and see exactly where it drifted
 - **Settings are remembered** — Sa, scale, labelling, tempo, meter, reference
   pitch and volume are stored in the browser and restored on the next visit
 - **Export** — the graph as PNG, or the session as CSV (note, swara, saptak,
   cents, vibrato, bar and beat per sung note)
 
-Audio is analysed entirely in the browser with the Web Audio API. Nothing is
-uploaded or recorded to disk.
+Audio is analysed entirely in the browser with the Web Audio API, and nothing is
+ever uploaded. Recorded takes are stored only in your own browser's IndexedDB —
+they never leave the machine, and deleting a take deletes it for good.
 
 ## Running locally
 

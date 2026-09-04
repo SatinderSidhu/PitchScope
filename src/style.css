@@ -11,6 +11,10 @@
 
 * { box-sizing: border-box; }
 
+/* A class that sets `display` beats the browser's default rule for the hidden
+   attribute, so state it explicitly once for everything. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   height: 100%;
@@ -264,6 +268,67 @@ button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--acce
   border: 1px solid var(--line);
   border-radius: 10px;
 }
+
+/* ---------- replay strip ---------- */
+.replay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.14), rgba(167, 139, 250, 0.05));
+  border-bottom: 1px solid rgba(167, 139, 250, 0.35);
+}
+.replay-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 30%; }
+.replay-time { font: 11px ui-monospace, Menlo, monospace; color: var(--dim); white-space: nowrap; }
+.seek { flex: 1; min-width: 80px; accent-color: #a78bfa; }
+#playBtn { min-width: 42px; }
+
+button.rec-on {
+  background: #b91c2c;
+  border-color: #f87171;
+  color: #fff;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.6; } }
+
+/* ---------- takes drawer ---------- */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 100vw);
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  box-shadow: -18px 0 40px rgba(0, 0, 0, 0.5);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  gap: 10px;
+}
+.drawer-head { display: flex; justify-content: space-between; align-items: center; }
+.drawer-head b { font-size: 14px; }
+.drawer-foot { font-size: 10px; color: var(--dim); border-top: 1px solid var(--line); padding-top: 8px; }
+
+.takes { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.takes li {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  align-items: center;
+}
+.takes .t-name { font-size: 13px; font-weight: 600; }
+.takes .t-meta { grid-column: 1 / -1; font: 10px ui-monospace, Menlo, monospace; color: var(--dim); }
+.takes .t-actions { display: flex; gap: 6px; }
+.takes button { padding: 4px 9px; font-size: 11px; }
+.takes .empty { display: block; color: var(--dim); font-size: 12px; text-align: center; padding: 24px 8px; }
 
 /* ---------- transient message ---------- */
 .toast {

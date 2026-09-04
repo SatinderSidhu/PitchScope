@@ -10,6 +10,9 @@ import '@fontsource/noto-sans-arabic/700.css'
 import { createEngine } from './audio/engine.js'
 import { createSynth } from './audio/synth.js'
 import { loadSettings, saveSettings } from './core/settings.js'
+import { createRecorder } from './audio/recorder.js'
+import { saveTake, listTakes, loadTake, deleteTake, renameTake, storageUsage } from './core/storage.js'
+import { encodeTrack, decodeTrack, snapshotSettings, applySettings, formatTime, defaultName } from './core/take.js'
 import { createTransport } from './core/transport.js'
 import { createView, buildSegments } from './ui/view.js'
 import { drawTimeline, timeAtX } from './ui/timeline.js'
@@ -34,6 +37,10 @@ let historySig = -1
 let historyTick = 0
 
 const stored = loadSettings()
+const recorder = createRecorder()
+
+let recording = null   // { startedAt } while a take is being captured
+let replay = null      // { meta, frames, audio, url, time, duration, playing } while reviewing one
 
 // ---------------------------------------------------------------- controls --
 // Sa selector: pitch class + octave. B2 is the default because it is a common
@@ -109,7 +116,14 @@ function stopMic () {
 
 $('gateBtn').onclick = startMic
 $('recBtn').onclick = () => (engine.running ? stopMic() : startMic())
-$('clearBtn').onclick = () => { engine.clear(); view.scrollBack = 0 }
+$('clearBtn').onclick = () => {
+  // Clearing restarts the frame clock, which would leave the audio of a take in
+  // progress describing a different stretch of time than its pitch track.
+  if (recording) { toast('Stop the recording first — clearing mid-take would desync the audio.'); return }
+  if (replay) { exitReplay(); return }
+  engine.clear()
+  view.scrollBack = 0
+}
 $('deviceSel').onchange = async () => {
   if (!engine.state.stream) return
   if ($('deviceSel').value === engine.currentDeviceId()) return
@@ -364,8 +378,12 @@ document.addEventListener('fullscreenchange', () => {
 
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return
-  if (e.code === 'Space') { e.preventDefault(); engine.running ? stopMic() : startMic() }
-  if (e.key === 'r' || e.key === 'R') { engine.clear(); view.scrollBack = 0 }
+  if (e.code === 'Space') {
+    e.preventDefault()
+    if (replay) toggleReplayPlay()
+    else engine.running ? stopMic() : startMic()
+  }
+  if (e.key === 'r' || e.key === 'R') $('clearBtn').click()
   if ((e.key === 'f' || e.key === 'F') && !e.shiftKey) $('freezeBtn').click()
   if (e.key === 'Escape') synth.allOff()
   if (e.shiftKey && (e.key === 'F' || e.key === 'f')) { e.preventDefault(); toggleFullscreen() }
@@ -417,6 +435,7 @@ function download (blob, name) {
 
 // -------------------------------------------------------------- render loop --
 function displayNow () {
+  if (replay) return replay.time
   return view.frozen ? frozenNow : engine.now
 }
 
@@ -438,7 +457,9 @@ function render () {
   const now = displayNow()
   view.ease()
 
-  const frames = engine.frames
+  const frames = replay ? replay.frames : engine.frames
+
+  if (replay) advanceReplay()
 
   // Auto-range from the last 20 s of voiced material.
   if (view.autoRange && frames.length) {
@@ -463,7 +484,7 @@ function render () {
     if (!recent.has(m) || recent.get(m) > age) recent.set(m, age)
   }
 
-  const live = engine.running && !view.frozen && view.inspectTime == null
+  const live = engine.running && !replay && !view.frozen && view.inspectTime == null
   const cursorFrame = view.inspectTime != null ? frameNear(view.inspectTime) : frames[frames.length - 1]
   if (cursorFrame && cursorFrame.midi > 0) lastVoiced = cursorFrame
   const shown = cursorFrame && cursorFrame.midi > 0 ? cursorFrame
@@ -567,6 +588,223 @@ if (new URLSearchParams(location.search).has('demo')) {
     go().catch(() => { /* needs a click first if autoplay is blocked */ })
   })
 }
+
+// ------------------------------------------------------------ recorded takes --
+// A take is one continuous capture: pressing Rec clears the graph and starts
+// recording, pressing it again ends the take and stores it. Deliberately not
+// tied to the Start/Stop pause, because pausing mid-take would leave the audio
+// and the pitch track disagreeing about where time went.
+
+async function startRecording () {
+  if (replay) exitReplay()
+  if (!engine.running) await startMic()
+  if (!engine.running) return
+
+  engine.clear()
+  view.scrollBack = 0
+  view.inspectTime = null
+
+  const wantAudio = $('audioChk').checked
+  const gotAudio = wantAudio ? recorder.start(engine.state.stream) : false
+  if (wantAudio && !gotAudio) toast('Audio capture is unavailable here — the pitch track will still be saved.')
+
+  recording = { startedAt: Date.now(), audio: gotAudio }
+  $('recordBtn').classList.add('rec-on')
+  $('recordBtn').textContent = '⏹ Stop rec'
+}
+
+async function stopRecording () {
+  if (!recording) return
+  const { startedAt } = recording
+  recording = null
+  $('recordBtn').classList.remove('rec-on')
+  $('recordBtn').textContent = '⏺ Rec'
+
+  const audio = await recorder.stop()
+  const frames = engine.frames.slice()
+  const duration = frames.length ? frames[frames.length - 1].t : 0
+
+  if (duration < 1) { toast('Take was too short to keep.'); return }
+
+  const id = 'take-' + startedAt
+  const track = encodeTrack(frames, duration)
+  const meta = {
+    id,
+    name: defaultName(new Date(startedAt)),
+    startedAt,
+    duration,
+    hasAudio: !!audio,
+    audioBytes: audio ? audio.size : 0,
+    settings: snapshotSettings(view, engine, transport)
+  }
+
+  try {
+    await saveTake({ meta, track, audio })
+    toast(`Saved "${meta.name}" — ${formatTime(duration)}`)
+    if (!$('takesPanel').hidden) renderTakes()
+  } catch (err) {
+    // A full disk or a browser refusing storage should say so, not fail quietly.
+    toast('Could not save the take: ' + (err?.name || 'storage error'))
+  }
+}
+
+$('recordBtn').onclick = () => (recording ? stopRecording() : startRecording())
+
+// ------------------------------------------------------------------ replay --
+async function openTake (id) {
+  const take = await loadTake(id)
+  if (!take) { toast('That take is no longer stored.'); return }
+
+  if (engine.running) stopMic()
+  exitReplay()
+  applySettings(take.meta.settings, view, engine, transport)
+
+  const frames = decodeTrack(take.track)
+  const url = take.audio ? URL.createObjectURL(take.audio) : null
+  const audio = url ? new Audio(url) : null
+
+  replay = {
+    meta: take.meta,
+    frames,
+    audio,
+    url,
+    time: 0,
+    duration: take.meta.duration || (frames.length ? frames[frames.length - 1].t : 0),
+    playing: false
+  }
+
+  $('gate').classList.add('hidden')
+  $('replayBar').hidden = false
+  $('replayName').textContent = take.meta.name + (take.audio ? '' : ' (no audio)')
+  $('takesPanel').hidden = true
+  view.scrollBack = 0
+  view.frozen = false
+  updateReplayUi()
+}
+
+function exitReplay () {
+  if (!replay) return
+  replay.audio?.pause()
+  if (replay.url) URL.revokeObjectURL(replay.url)
+  replay = null
+  $('replayBar').hidden = true
+  historySig = -1        // force the lists back to the live session
+}
+
+function toggleReplayPlay () {
+  if (!replay) return
+  replay.playing = !replay.playing
+  if (replay.audio) {
+    if (replay.playing) {
+      if (replay.time >= replay.duration - 0.05) replay.time = 0
+      replay.audio.currentTime = replay.time
+      replay.audio.play().catch(() => { replay.playing = false })
+    } else replay.audio.pause()
+  } else {
+    replay.wallClock = performance.now() / 1000 - replay.time
+    if (replay.playing && replay.time >= replay.duration - 0.05) {
+      replay.time = 0
+      replay.wallClock = performance.now() / 1000
+    }
+  }
+  updateReplayUi()
+}
+
+// Audio is the clock when there is audio; otherwise the wall clock stands in.
+function advanceReplay () {
+  if (!replay) return
+  if (replay.playing) {
+    replay.time = replay.audio
+      ? replay.audio.currentTime
+      : performance.now() / 1000 - replay.wallClock
+    if (replay.time >= replay.duration) {
+      replay.time = replay.duration
+      replay.playing = false
+      replay.audio?.pause()
+      updateReplayUi()
+    }
+  }
+  const pos = replay.duration ? (replay.time / replay.duration) * 1000 : 0
+  if (document.activeElement !== $('seek')) $('seek').value = String(Math.round(pos))
+  $('replayTime').textContent = `${formatTime(replay.time)} / ${formatTime(replay.duration)}`
+}
+
+function updateReplayUi () {
+  $('playBtn').textContent = replay?.playing ? '❚❚' : '▶'
+}
+
+$('playBtn').onclick = toggleReplayPlay
+$('exitReplayBtn').onclick = exitReplay
+$('seek').oninput = e => {
+  if (!replay) return
+  replay.time = (Number(e.target.value) / 1000) * replay.duration
+  if (replay.audio) replay.audio.currentTime = replay.time
+  else replay.wallClock = performance.now() / 1000 - replay.time
+}
+
+// -------------------------------------------------------------- takes list --
+$('takesBtn').onclick = () => {
+  const panel = $('takesPanel')
+  panel.hidden = !panel.hidden
+  if (!panel.hidden) renderTakes()
+}
+$('takesCloseBtn').onclick = () => { $('takesPanel').hidden = true }
+
+async function renderTakes () {
+  const list = $('takesList')
+  let takes = []
+  try {
+    takes = await listTakes()
+  } catch {
+    list.innerHTML = '<li class="empty">Storage is unavailable in this browser.</li>'
+    return
+  }
+
+  if (!takes.length) {
+    list.innerHTML = '<li class="empty">No takes yet. Press ⏺ Rec, sing, then press it again.</li>'
+  } else {
+    list.innerHTML = takes.map(t => `
+      <li data-id="${t.id}">
+        <span class="t-name">${escapeHtml(t.name)}</span>
+        <span class="t-actions">
+          <button data-act="play">▶ Replay</button>
+          <button data-act="rename">Rename</button>
+          <button data-act="delete">Delete</button>
+        </span>
+        <span class="t-meta">${new Date(t.startedAt).toLocaleString()} · ${formatTime(t.duration)}
+          · ${t.hasAudio ? (t.audioBytes / 1048576).toFixed(1) + ' MB audio' : 'pitch only'}</span>
+      </li>`).join('')
+  }
+
+  const { usage, quota } = await storageUsage()
+  $('takesUsage').textContent = quota
+    ? `${takes.length} take${takes.length === 1 ? '' : 's'} · using ${(usage / 1048576).toFixed(1)} MB of about ${(quota / 1073741824).toFixed(1)} GB available on this device`
+    : `${takes.length} take${takes.length === 1 ? '' : 's'} stored in this browser`
+}
+
+$('takesList').onclick = async e => {
+  const button = e.target.closest('button')
+  const row = e.target.closest('li[data-id]')
+  if (!button || !row) return
+  const id = row.dataset.id
+  const act = button.dataset.act
+
+  if (act === 'play') return openTake(id)
+  if (act === 'rename') {
+    const name = prompt('Name this take', row.querySelector('.t-name').textContent)
+    if (name) { await renameTake(id, name.slice(0, 80)); renderTakes() }
+    return
+  }
+  if (act === 'delete') {
+    if (!confirm('Delete this take permanently?')) return
+    if (replay?.meta.id === id) exitReplay()
+    await deleteTake(id)
+    renderTakes()
+  }
+}
+
+const escapeHtml = str => str.replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
 // ------------------------------------------------------- history & accuracy --
 // The lists cover the whole session, not just what is on screen, so a singer

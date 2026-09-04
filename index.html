@@ -19,6 +19,8 @@
       <div class="bar-main">
         <button id="recBtn" class="rec">● Start</button>
         <button id="clearBtn" class="ghost">Clear</button>
+        <button id="recordBtn" class="ghost">⏺ Rec</button>
+        <button id="takesBtn" class="ghost">☰ Takes</button>
         <button id="settingsBtn" class="ghost only-narrow" aria-expanded="false">⚙ Setup</button>
         <span class="spacer"></span>
         <button id="freezeBtn" class="ghost">Freeze</button>
@@ -116,6 +118,14 @@
       </div>
     </header>
 
+    <div id="replayBar" class="replay" hidden>
+      <button id="playBtn" class="ghost">▶</button>
+      <span id="replayName" class="replay-name">—</span>
+      <input id="seek" class="seek" type="range" min="0" max="1000" value="0" />
+      <span id="replayTime" class="replay-time">0:00 / 0:00</span>
+      <button id="exitReplayBtn" class="ghost">Exit replay</button>
+    </div>
+
     <main class="stage">
 
       <aside class="side">
@@ -163,6 +173,15 @@
     <footer class="piano-wrap">
       <canvas id="piano" class="piano"></canvas>
     </footer>
+
+    <div id="takesPanel" class="drawer" hidden>
+      <div class="drawer-head">
+        <b>Recorded takes</b>
+        <button id="takesCloseBtn" class="ghost">Close</button>
+      </div>
+      <ul id="takesList" class="takes"></ul>
+      <div id="takesUsage" class="drawer-foot"></div>
+    </div>
 
     <div id="toast" class="toast"></div>
 
