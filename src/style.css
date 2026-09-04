@@ -91,6 +91,23 @@ button.rec.on { background: #22c55e; border-color: #4ade80; color: #04240f; }
 button.big { padding: 12px 22px; font-size: 15px; margin: 14px 0 10px; }
 button.ghost.on { background: rgba(90, 217, 255, 0.16); border-color: var(--accent); color: var(--accent); }
 
+/* A link that has to sit in a row of buttons and match them. */
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--panel-2);
+  color: var(--text);
+}
+.btn-link:hover { border-color: rgba(255, 255, 255, 0.24); }
+.gate-link { margin: 14px 0 0; font-size: 12px; }
+.gate-link a { color: var(--accent); }
+
 /* ---------- stage ---------- */
 /* Canvases handle their own gestures, so the browser must not steal them for
    scrolling or double-tap zoom. */

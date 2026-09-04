@@ -10,6 +10,7 @@ notes can be labelled in sargam — Punjabi (ਸਾ ਰੇ ਗਾ ਮਾ ਪਾ 
 names, or in both systems at once, with a Sa you choose.
 
 **Live:** https://satindersidhu.github.io/PitchScope/
+**Guide:** https://satindersidhu.github.io/PitchScope/help.html
 
 ## Features
 

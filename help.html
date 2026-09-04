@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070a0f" />
+  <title>PitchScope — Guide</title>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="masthead">
+      <a class="back" href="./index.html">← Back to PitchScope</a>
+      <h1>PitchScope — Guide</h1>
+      <p>Everything on the screen, what each control changes, and what the app does
+         with your voice. Nothing you sing ever leaves your machine.</p>
+    </header>
+
+    <nav>
+      <b>Contents</b>
+      <a href="#start">Getting started</a>
+      <a href="#screen">Reading the screen</a>
+      <a href="#sa">Sa and sargam</a>
+      <a href="#scale">Scale and thaat</a>
+      <a href="#display">Auto range and flats</a>
+      <a href="#keys">Playing the keyboards</a>
+      <a href="#beat">Tempo, meter, metronome</a>
+      <a href="#record">Recording takes</a>
+      <a href="#notation">Notation for a musician</a>
+      <a href="#export">Exporting</a>
+      <a href="#shortcuts">Shortcuts</a>
+      <a href="#accuracy">How accurate is it</a>
+      <a href="#privacy">Privacy and storage</a>
+      <a href="#trouble">Troubleshooting</a>
+    </nav>
+
+    <main>
+
+      <section id="start">
+        <h2>Getting started</h2>
+        <p class="lede">Click <strong>Enable microphone</strong>, allow access, and sing.</p>
+        <p>The browser asks for the microphone once. Say yes and the permission holds for the
+           whole session — pressing <strong>Stop</strong> pauses the analysis but keeps the
+           microphone open on purpose, so you are never asked twice. On the published
+           <code>https</code> site the browser usually remembers the answer permanently.</p>
+        <p>Everything after that is optional setup: where your Sa sits, which script you want
+           the notes named in, and the tempo you are practising against. All of it is
+           remembered for next time.</p>
+      </section>
+
+      <section id="screen">
+        <h2>Reading the screen</h2>
+
+        <h3>The big note and the cents meter</h3>
+        <p>The large label is the note you are singing right now, with the other naming systems
+           underneath it. Below that, the number in cents is how far off you are from that note
+           being exactly in tune. A cent is a hundredth of a semitone; 100 cents is the gap
+           between two adjacent piano keys.</p>
+        <table>
+          <tr><th>Reading</th><th>Meaning</th></tr>
+          <tr><td><span class="pill green">under 12¢</span></td><td>In tune. Most listeners cannot hear this as wrong.</td></tr>
+          <tr><td><span class="pill amber">12–30¢</span></td><td>Audibly drifting. Worth correcting.</td></tr>
+          <tr><td><span class="pill red">over 30¢</span></td><td>Clearly off — a third of the way to the next note.</td></tr>
+        </table>
+        <p>The meter needle shows the same thing as a position: centred is in tune, left is flat,
+           right is sharp.</p>
+
+        <h3>The pitch timeline</h3>
+        <p>The scrolling graph is the heart of it. Each row is one semitone, labelled on the left.
+           Time runs left to right, newest at the playhead.</p>
+        <ul>
+          <li><strong>Blocks</strong> are the notes you held, coloured by how in tune they were.</li>
+          <li><strong>The thin white line</strong> on top is your actual pitch, drawn continuously.
+              This is where scoops into a note, vibrato and slow drift become visible — the block
+              says which note, the line says how you got there and whether you stayed.</li>
+          <li><strong>Vertical lines</strong> are beats; the thicker ones are bar lines.</li>
+        </ul>
+
+        <h3>The beat lane</h3>
+        <p>Under the graph, one cell per beat showing which note occupied that beat. This is the
+           rhythm read-out: what landed on beat 1, 2, 3, 4.</p>
+
+        <h3>Recent notes and Accuracy by note</h3>
+        <p>Every note you sing is listed, newest first, with a ±50¢ bar. The solid tick is where
+           the note averaged out; the translucent band behind it is how far the pitch wandered
+           while you held it — a wide band means an unsteady note even when the average looks
+           fine.</p>
+        <p><strong>Accuracy by note</strong> is the same data averaged per note and sorted worst
+           first, needing at least two attempts before a note appears. This is the practice list:
+           it turns one bad attempt into nothing, and a habit into an obvious line at the top.</p>
+      </section>
+
+      <section id="sa">
+        <h2>Sa and sargam</h2>
+        <p class="lede">Sa is your tonic. Everything in the Indian naming is measured from it.</p>
+        <p>Set it with the <strong>SA</strong> note and octave selectors. B2 is the default. Move
+           Sa and every swara label across the whole app moves with it — the keyboards, the graph,
+           the history, the notation.</p>
+
+        <h3>The twelve swaras</h3>
+        <p>With Sa on B2, the notes going up are:</p>
+        <table>
+          <tr><th>Note</th><th>Swara</th><th>ਪੰਜਾਬੀ</th><th>हिंदी</th><th>اردو</th></tr>
+          <tr><td>B2</td><td>Sa</td><td class="swara">ਸਾ</td><td class="swara">सा</td><td class="swara">سا</td></tr>
+          <tr><td>C3</td><td>♭Re</td><td class="swara">♭ਰੇ</td><td class="swara">♭रे</td><td class="swara">♭رے</td></tr>
+          <tr><td>C♯3</td><td>Re</td><td class="swara">ਰੇ</td><td class="swara">रे</td><td class="swara">رے</td></tr>
+          <tr><td>D3</td><td>♭Ga</td><td class="swara">♭ਗਾ</td><td class="swara">♭गा</td><td class="swara">♭گا</td></tr>
+          <tr><td>D♯3</td><td>Ga</td><td class="swara">ਗਾ</td><td class="swara">गा</td><td class="swara">گا</td></tr>
+          <tr><td>E3</td><td>Ma</td><td class="swara">ਮਾ</td><td class="swara">मा</td><td class="swara">ما</td></tr>
+          <tr><td>F3</td><td>♯Ma</td><td class="swara">♯ਮਾ</td><td class="swara">♯मा</td><td class="swara">♯ما</td></tr>
+          <tr><td>F♯3</td><td>Pa</td><td class="swara">ਪਾ</td><td class="swara">पा</td><td class="swara">پا</td></tr>
+          <tr><td>G3</td><td>♭Dha</td><td class="swara">♭ਧਾ</td><td class="swara">♭धा</td><td class="swara">♭دھا</td></tr>
+          <tr><td>G♯3</td><td>Dha</td><td class="swara">ਧਾ</td><td class="swara">धा</td><td class="swara">دھا</td></tr>
+          <tr><td>A3</td><td>♭Ni</td><td class="swara">♭ਨੀ</td><td class="swara">♭नी</td><td class="swara">♭نی</td></tr>
+          <tr><td>A♯3</td><td>Ni</td><td class="swara">ਨੀ</td><td class="swara">नी</td><td class="swara">نی</td></tr>
+        </table>
+        <p><strong>♭</strong> marks a komal swara and <strong>♯</strong> marks teevra Ma. Traditional
+           notation underlines komal and ticks teevra, but those are combining marks that break
+           apart at small sizes and across fonts, so the flat and sharp signs are used instead.</p>
+
+        <h3>Saptak</h3>
+        <p>A trailing mark says which octave the swara is in, relative to your Sa:</p>
+        <table>
+          <tr><th>Written</th><th>Saptak</th><th>Means</th></tr>
+          <tr><td class="swara">ਸਾ.</td><td>mandra</td><td>The octave below your Sa</td></tr>
+          <tr><td class="swara">ਸਾ</td><td>madhya</td><td>Your own octave</td></tr>
+          <tr><td class="swara">ਸਾ'</td><td>taar</td><td>The octave above</td></tr>
+        </table>
+
+        <h3>Labels</h3>
+        <p>The <strong>LABELS</strong> menu picks the script and how much to show. Any of Punjabi,
+           Hindi, Urdu or roman sargam, on its own or with the western note alongside it. It only
+           changes what is written — never what is measured.</p>
+      </section>
+
+      <section id="scale">
+        <h2>Scale and thaat</h2>
+        <p class="lede">Tells the app which notes belong to your tune, and dims the rest.</p>
+        <p>Rows on the graph that are outside the chosen scale are darkened, so straying outside
+           it is visible at a glance. That is all it does: it never filters, snaps or corrects
+           your pitch. Sing anything and it is still measured and recorded exactly as sung.</p>
+        <p>The ten thaats are the parent scales of Hindustani music — each fixes which of the
+           twelve swaras are shuddha, komal or teevra, and every raag sits inside one. Kafi, for
+           example, is Sa Re ♭Ga Ma Pa Dha ♭Ni.</p>
+        <p><strong>chromatic (all 12)</strong> dims nothing — right when you are working out a new
+           tune and do not yet know its scale. The <strong>major</strong> and
+           <strong>natural minor</strong> entries are the same idea under western names; they
+           duplicate Bilawal and Asavari.</p>
+        <p>Everything is rooted on your Sa, so moving Sa moves the whole scale with it. The scale
+           is saved with each take, so replaying an old take restores what you sang it against.</p>
+      </section>
+
+      <section id="display">
+        <h2>Auto range and flats</h2>
+
+        <h3>AUTO RANGE</h3>
+        <p>Controls how much of the pitch span the graph and keyboards cover. On, the window
+           fits itself to what you have sung in the last twenty seconds, with a little headroom
+           and a two-octave minimum. Off, it stays where you put it with
+           <kbd>shift</kbd> + scroll on the graph, or a two-finger pinch on a phone.</p>
+        <p>Turn it off when the rescaling distracts you mid-phrase, or when you want two takes
+           framed identically so they can be compared. Zooming manually switches it off for you.</p>
+
+        <h3>FLATS</h3>
+        <p>Purely how western names are spelled: off gives C♯ D♯ F♯ G♯ A♯, on gives D♭ E♭ G♭ A♭ B♭.
+           Same pitches, different label. It does not touch sargam, which carries its own
+           accidentals.</p>
+        <div class="note">
+          <p>It is a blunt global toggle, not key-aware — it will not pick the theoretically
+             correct spelling for a given key. With Sa on B, sharps are the correct spelling,
+             so leaving it off is right.</p>
+        </div>
+      </section>
+
+      <section id="keys">
+        <h2>Playing the keyboards</h2>
+        <p class="lede">Both keyboards are playable, so you always have a reference pitch.</p>
+        <p>There are two: a vertical rail down the left of the graph, which doubles as its
+           axis so one row on the graph is the same height as its key, and the familiar wide
+           keyboard along the bottom.</p>
+        <ul>
+          <li><strong>Click or tap a key</strong> to hear it. Hold to sustain, drag or slide to
+              glide between notes. On a touch screen several fingers work at once.</li>
+          <li><strong>SUSTAIN</strong> latches instead: tap a key to start it, tap again to stop.
+              Latch Sa and Pa together and you have a drone to sing against.</li>
+          <li><strong>KEY SOUND</strong> turns the clicks off entirely, <strong>VOL</strong> sets
+              the level, and <kbd>Esc</kbd> stops every sounding note.</li>
+        </ul>
+        <p>Keys are coloured by what they mean: <span class="pill violet">violet</span> is a key
+           you pressed, while green, amber and red show how in tune the note you
+           <em>sang</em> was.</p>
+        <div class="note warn">
+          <p><b>Use headphones.</b> Through speakers the microphone hears the reference tone as
+             well as your voice, and the app will happily track the tone instead of you.</p>
+        </div>
+      </section>
+
+      <section id="beat">
+        <h2>Tempo, meter and metronome</h2>
+        <p>♩= sets the tempo and <strong>METER</strong> the beats per bar — 4/4 by default, with
+           3/4, 2/4, 5/4, 6/8 and 7/8 available. Together they draw the beat and bar lines on the
+           graph, fill the beat lane, and decide how the notation is barred.</p>
+        <p><strong>METRONOME</strong> plays a click, higher on the downbeat. It is deliberately
+           not restored when you reload: a page cannot start making noise before you have
+           interacted with it.</p>
+        <p><strong>A4</strong> is the reference pitch everything is measured against, 440 Hz by
+           default. Change it to match an instrument tuned differently, and every note and
+           frequency in the app moves with it.</p>
+      </section>
+
+      <section id="record">
+        <h2>Recording takes</h2>
+        <p class="lede">Press <strong>⏺ Rec</strong>, sing, press it again. The take is saved on
+           your own machine.</p>
+        <p>A take stores two things: the audio, and the pitch analysis. <strong>☰ Takes</strong>
+           lists them with date, length and size.</p>
+        <ul>
+          <li><strong>Replay</strong> puts the whole app into review: the graph, both keyboards,
+              the note history and the accuracy list all replay in sync with the recording, so you
+              can hear a phrase and watch exactly where it drifted.</li>
+          <li><strong>Rename</strong> — or just click the take's name — to edit it in place.
+              <kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels.</li>
+          <li><strong>Delete</strong> removes it permanently.</li>
+        </ul>
+        <p>Each take also remembers the setup it was sung under — Sa, script, scale, tempo, meter,
+           A4 — and restores it on replay, so an old take is never relabelled by whatever you have
+           changed since.</p>
+        <div class="note warn">
+          <p><b>Keep the tab in front while recording.</b> Browsers stop animation frames in a
+             background tab, which pauses the pitch analysis even though the audio keeps recording.
+             The app warns you if this happens.</p>
+        </div>
+        <p><strong>Clear</strong> is refused during a take, because restarting the clock mid-take
+           would leave the audio and the pitch track disagreeing about where time went. Pausing
+           with <strong>Stop</strong> is safe.</p>
+      </section>
+
+      <section id="notation">
+        <h2>Notation for a musician</h2>
+        <p class="lede"><strong>♪ Notes</strong> writes out what you sang as something another
+           person can play.</p>
+        <p>It transcribes whatever is on screen — the live session, or the take being replayed.
+           Held notes are snapped to the beat, grouped into bars of your taal, and drawn as sargam
+           with the western name under each swara, so the same sheet works for a harmonium player
+           or a guitarist.</p>
+        <pre>Live session — 6 notes
+Sa = B2 (123.5 Hz, A4 = 440)
+Taal 4/4 at 80 bpm
+Each bar is one line; – holds the previous note, · is a rest
+
+  1 | ਸਾ   –    | ਰੇ   –    | ਗਾ   –    | ਮਾ   –    |
+  2 | ਪਾ   –    | –    –    | ·    ·    | ਸਾ'  –    |</pre>
+        <p>The header matters as much as the notes: without knowing where your Sa sits in western
+           terms and in Hz, the sargam is unplayable by anyone but you.</p>
+        <p><strong>GRID</strong> chooses 1, 2 or 4 subdivisions per beat. Raise it for fast
+           phrases, lower it when ornaments clutter the sheet.</p>
+        <p>Three ways to hand it over: <strong>Copy text</strong>, <strong>Download .txt</strong>,
+           and <strong>Download .mid</strong> — a standard MIDI file that any notation app, DAW or
+           keyboard will open. That last one is usually most useful, since your musician can hear
+           the tune rather than only read it.</p>
+        <div class="note">
+          <p>Two limits worth knowing. Quantising uses <b>the tempo you have set</b>, so if you
+             sang freely against a different pulse the bars will not line up — set ♩= to match
+             first. And a meend or glide becomes discrete notes, because a note grid cannot
+             express a continuous slide. The pitch graph still shows the real gesture.</p>
+        </div>
+      </section>
+
+      <section id="export">
+        <h2>Exporting</h2>
+        <table>
+          <tr><th>Button</th><th>Gives you</th></tr>
+          <tr><td><strong>PNG</strong></td><td>The graph as a picture, exactly as drawn.</td></tr>
+          <tr><td><strong>CSV</strong></td><td>One row per sung note: start, end, duration, western
+              name, swara in roman and in your script, saptak, MIDI number, cents error, how far
+              the pitch wandered, and the bar and beat it fell on.</td></tr>
+          <tr><td><strong>.txt / .mid</strong></td><td>From the Notes panel — the notation as text,
+              or as a MIDI file.</td></tr>
+        </table>
+        <p>The CSV is the one to open in a spreadsheet if you want to chart your progress over
+           weeks.</p>
+      </section>
+
+      <section id="shortcuts">
+        <h2>Shortcuts</h2>
+        <table>
+          <tr><th>Key</th><th>Does</th></tr>
+          <tr><td><kbd>space</kbd></td><td>Start or stop the microphone — or play/pause a replay</td></tr>
+          <tr><td><kbd>R</kbd></td><td>Clear the graph</td></tr>
+          <tr><td><kbd>F</kbd></td><td>Freeze the display so you can study a phrase</td></tr>
+          <tr><td><kbd>shift</kbd> + <kbd>F</kbd></td><td>Fullscreen</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Silence every sounding key</td></tr>
+          <tr><td>scroll</td><td>Zoom time</td></tr>
+          <tr><td><kbd>shift</kbd> + scroll</td><td>Zoom the pitch range</td></tr>
+          <tr><td>drag</td><td>Scrub back through history</td></tr>
+          <tr><td>click</td><td>Pin the inspect cursor on a moment; click again to release</td></tr>
+        </table>
+        <p>On a phone: one finger drags the graph, two fingers pinch to zoom time, and the
+           <strong>⚙ Setup</strong> button holds the controls that do not fit.</p>
+      </section>
+
+      <section id="accuracy">
+        <h2>How accurate is it</h2>
+        <p>Pitch is found with the McLeod Pitch Method — an autocorrelation technique rather than
+           spectral peak-picking, chosen because a sung vowel often has a weak or missing
+           fundamental that makes spectral methods report a note an octave too high. A running
+           median over recent frames removes the isolated octave flips that survive that, and a
+           clarity gate suppresses breath noise.</p>
+        <p>Measured against synthesised tones from E2 to G5, the readout lands within a third of a
+           cent. Your own accuracy will be limited by room noise and microphone quality long before
+           the algorithm is.</p>
+        <p>The reference tones the keyboards play are built from two oscillators detuned
+           symmetrically, so the pair beats gently but the pitch itself stays exact — a one-sided
+           detune would leave every reference note a couple of cents sharp, which is no good in a
+           tool whose job is telling you that you are two cents sharp.</p>
+      </section>
+
+      <section id="privacy">
+        <h2>Privacy and storage</h2>
+        <p class="lede">Nothing you sing is ever uploaded. There is no server.</p>
+        <p>All the analysis happens in the browser on your own machine. Recorded takes are kept in
+           your browser's IndexedDB — chosen over localStorage, which caps out near 5 MB and holds
+           only text, while a minute of audio is around a megabyte. The Takes panel shows how much
+           room you are using.</p>
+        <p>Settings live in localStorage. Both are per-browser and per-device: takes recorded on
+           your laptop will not appear on your phone, and deleting a take deletes it for good.</p>
+      </section>
+
+      <section id="trouble">
+        <h2>Troubleshooting</h2>
+
+        <h3>No note appears while I sing</h3>
+        <p>Check the meter shows a device and that <strong>Stop</strong> is showing (which means it
+           is running). Confidence under about 70% means the app is not sure enough to commit —
+           usually too quiet, too breathy, or too much room noise. Sing a sustained vowel rather
+           than a consonant.</p>
+
+        <h3>The note jumps an octave</h3>
+        <p>Very breathy or very quiet singing can do this. Getting closer to the microphone
+           usually fixes it.</p>
+
+        <h3>It keeps asking for the microphone</h3>
+        <p>It should ask once per session. If you are on <code>http://localhost</code>, the browser
+           forgets between page loads; the published <code>https</code> site remembers. Safari
+           re-asks on every load by design.</p>
+
+        <h3>My take has no audio</h3>
+        <p>The <strong>record audio</strong> checkbox may be off, or the browser may not support
+           recording. The pitch track is saved either way, so the replay still works — the take is
+           simply labelled "no audio".</p>
+
+        <h3>Fullscreen does nothing</h3>
+        <p>Some embedded browser views refuse fullscreen; the app will tell you when the request is
+           denied. iPhone Safari has no fullscreen at all — add the page to your home screen
+           instead and it runs without browser chrome.</p>
+
+        <h3>The notation does not line up with what I sang</h3>
+        <p>Set ♩= to the tempo you actually sang at before transcribing. The bars are drawn from
+           that number, not from your performance.</p>
+      </section>
+
+      <footer>
+        <p>PitchScope runs entirely in your browser.
+           <a href="./index.html">Back to the app</a> ·
+           <a href="https://github.com/SatinderSidhu/PitchScope">Source on GitHub</a></p>
+      </footer>
+
+    </main>
+  </div>
+  <script type="module" src="/src/help.js"></script>
+</body>
+</html>
